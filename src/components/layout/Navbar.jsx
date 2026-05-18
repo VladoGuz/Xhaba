@@ -1,44 +1,94 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { ShoppingBag, Search, Menu, UserCircle, Shield, LogIn } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
-const Navbar = () => {
+function Navbar() {
+  const { cartItems } = useCart();
+  const { user } = useAuth();
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+
   return (
-    <nav className="bg-manta border-b-2 border-barro/10 shadow-sm sticky top-0 z-50">
+    <nav className="bg-white border-b border-barro/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           
-          {/* Logo / Nombre de la Marca */}
-          <div className="flex-shrink-0 flex items-center cursor-pointer">
-            <span className="font-serif font-bold text-3xl tracking-wide text-barro">
-              Xha<span className="text-grana">ba</span>
-            </span>
-          </div>
-
-          {/* Menú de Navegación Central */}
-          <div className="hidden md:flex space-x-8">
-            <a href="#" className="text-barro-dark hover:text-grana font-medium transition-colors">
-              Catálogo Ancestral
-            </a>
-            <a href="#" className="text-barro-dark hover:text-grana font-medium transition-colors">
-              Nuestros Artesanos
-            </a>
-            <a href="#" className="text-barro-dark hover:text-grana font-medium transition-colors">
-              Conoce los Valles
-            </a>
-          </div>
-
-          {/* Botones de Acción */}
-          <div className="flex items-center space-x-4">
-            <button className="text-barro hover:text-grana transition-colors relative">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              <span className="absolute -top-2 -right-2 bg-grana text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                2
+          {/* Logo */}
+          <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
+            <Link to="/">
+              <span className="font-serif text-3xl font-bold text-barro tracking-tight hover:text-barro-dark transition-colors">
+                Xhaba
               </span>
-            </button>
+            </Link>
+          </div>
 
-            <button className="hidden md:block border-2 border-barro text-barro hover:bg-barro hover:text-white px-5 py-2 rounded font-semibold transition-all">
-              Ingresar
+          {/* Buscador (Oculto en móvil) */}
+          <div className="hidden md:flex flex-1 max-w-xl mx-8">
+            <div className="relative w-full">
+              <input 
+                type="text" 
+                placeholder="Buscar huipiles, blusas, guayaberas..." 
+                className="w-full bg-gray-50 border border-gray-200 rounded-full py-2.5 pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+              />
+              <button className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-barro transition-colors">
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Íconos de Navegación */}
+          <div className="flex items-center gap-6">
+            
+            {/* Si no está logueado */}
+            {!user && (
+              <Link to="/login" className="hidden md:flex flex-col items-center gap-1 text-gray-500 hover:text-barro transition-colors">
+                <LogIn className="w-6 h-6" />
+                <span className="text-[10px] uppercase font-semibold tracking-wider">Ingresar</span>
+              </Link>
+            )}
+
+            {/* Si es Artesano */}
+            {user?.role === 'artisan' && (
+              <Link to="/dashboard" className="hidden md:flex flex-col items-center gap-1 text-gray-500 hover:text-barro transition-colors" title="Artesano">
+                <UserCircle className="w-6 h-6" />
+                <span className="text-[10px] uppercase font-semibold tracking-wider">Taller</span>
+              </Link>
+            )}
+
+            {/* Si es Admin */}
+            {user?.role === 'admin' && (
+              <Link to="/admin" className="hidden md:flex flex-col items-center gap-1 text-gray-500 hover:text-barro transition-colors" title="Admin">
+                <Shield className="w-6 h-6" />
+                <span className="text-[10px] uppercase font-semibold tracking-wider">Admin</span>
+              </Link>
+            )}
+            
+            {/* Si es Cliente */}
+            {user?.role === 'client' && (
+              <>
+                <Link to="/profile" className="hidden md:flex flex-col items-center gap-1 text-gray-500 hover:text-barro transition-colors">
+                  <UserCircle className="w-6 h-6" />
+                  <span className="text-[10px] uppercase font-semibold tracking-wider">Perfil</span>
+                </Link>
+
+                <Link to="/cart" className="relative flex flex-col items-center gap-1 text-gray-500 hover:text-barro transition-colors group">
+                  <div className="relative">
+                    <ShoppingBag className="w-6 h-6" />
+                    {totalItems > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                        {totalItems}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] uppercase font-semibold tracking-wider">Bolsa</span>
+                </Link>
+              </>
+            )}
+
+            {/* Menú Hamburguesa (Solo móvil) */}
+            <button className="md:hidden p-2 text-gray-500 hover:text-barro transition-colors">
+              <Menu className="w-6 h-6" />
             </button>
           </div>
 
@@ -46,7 +96,6 @@ const Navbar = () => {
       </div>
     </nav>
   );
-};
+}
 
-// ¡ESTA ES LA LÍNEA MÁGICA QUE LE FALTA A TU ARCHIVO!
 export default Navbar;
