@@ -1,23 +1,23 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/layout/Navbar';
-import Footer from './components/layout/Footer';
-import ProtectedRoute from './components/layout/ProtectedRoute';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Páginas Públicas / Invitado
 import Home from './pages/Home';
-import Register from './pages/auth/Register';
-import Login from './pages/auth/Login';
+import Register from './pages/Register';
+import Login from './pages/Login';
 
 // Páginas del Cliente
-import Cart from './pages/shop/Cart';
-import Checkout from './pages/shop/Checkout';
-import ArtisanProfile from './pages/shop/ArtisanProfile';
-import ClientProfile from './pages/shop/ClientProfile';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import ArtisanProfile from './pages/ArtisanProfile';
+import ClientProfile from './pages/ClientProfile';
 
 // Páginas del Artesano y Administrador
-import ArtisanDashboard from './pages/dashboard/ArtisanDashboard';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import ArtisanDashboard from './pages/ArtisanDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
 /**
  * Componente Principal (App)

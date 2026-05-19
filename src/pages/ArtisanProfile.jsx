@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, MapPin } from 'lucide-react';
-import ReviewForm from '../../components/reviews/ReviewForm';
+import ReviewForm from '../components/ReviewForm';
 
 function ArtisanProfile() {
   return (

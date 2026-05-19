@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, AlertTriangle, CheckCircle } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../context/CartContext';
 
 /**
  * Componente Checkout (Historia de Usuario HU-02)

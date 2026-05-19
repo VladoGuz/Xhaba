@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import ProductForm from '../../components/dashboard/ProductForm';
-import InventoryList from '../../components/dashboard/InventoryList';
-import Reputation from '../../components/dashboard/Reputation';
+import ProductForm from '../components/ProductForm';
+import InventoryList from '../components/InventoryList';
+import Reputation from '../components/Reputation';
 
 /**
  * Componente ArtisanDashboard (Panel de Artesano)

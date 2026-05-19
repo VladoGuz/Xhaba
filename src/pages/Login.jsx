@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { User, Shield, Briefcase } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 function Login() {
   const { user, loginAsClient, loginAsArtisan, loginAsAdmin } = useAuth();

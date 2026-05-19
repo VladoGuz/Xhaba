@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingBag } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../context/CartContext';
 
 /**
  * Componente Cart (Historia de Usuario HU-03)

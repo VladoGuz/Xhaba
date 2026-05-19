@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 function ProductCard({ id, title, price, artisan, image, isUnique }) {
   const { addToCart } = useCart();

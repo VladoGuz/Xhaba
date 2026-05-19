@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import ProductModeration from '../../components/admin/ProductModeration';
-import UserModeration from '../../components/admin/UserModeration';
-import AbandonedCarts from '../../components/admin/AbandonedCarts';
+import ProductModeration from '../components/ProductModeration';
+import UserModeration from '../components/UserModeration';
+import AbandonedCarts from '../components/AbandonedCarts';
 
 /**
  * Componente AdminDashboard (Panel de Administración)
