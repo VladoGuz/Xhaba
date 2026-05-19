@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const artisanController = require("../controllers/artisanController");
+const artisanController = require("../controllers/arteanosController");
 
 // Definir los endpoints
 router.get("/", artisanController.getArtisans);

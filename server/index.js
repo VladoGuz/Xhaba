@@ -3,7 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 // Importar rutas (ejemplo con artesanos)
-const artisanRoutes = require("./routes/artisanRoutes");
+const artisanRoutes = require("./src/routes/artesanosRoutes");
 
 const app = express();
 

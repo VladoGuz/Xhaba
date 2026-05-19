@@ -1,4 +1,4 @@
-const pool = require("../database/db");
+const pool = require("../config/db");
 
 // Obtener todos los artesanos
 const getArtisans = async (req, res) => {
