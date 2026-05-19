@@ -15,7 +15,7 @@ app.use(express.json()); // Permite a Express leer JSON en el body de las petici
 app.use("/api/artisans", artisanRoutes);
 
 // Iniciar servidor
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 1234;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
