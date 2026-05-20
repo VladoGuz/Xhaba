@@ -13,4 +13,9 @@ const pool = new Pool({
   database: process.env.DB_NAME,
 });
 
+// Pequeño truco para verificar en consola si la conexión fue exitosa al iniciar el servidor
+pool.query('SELECT NOW()')
+  .then(() => console.log('🚀 Conexión exitosa a la base de datos PostgreSQL'))
+  .catch((err) => console.error('❌ Error crítico al conectar a la base de datos:', err.message));
+
 export default pool;

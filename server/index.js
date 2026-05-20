@@ -4,7 +4,8 @@ import dotenv from "dotenv";
 
 // Fíjate en la extensión .js obligatoria
 import artisanRoutes from "./src/routes/artisanRoutes.js";
-
+import productRoutes from "./src/routes/productRoutes.js";
+import homeRoutes from "./src/routes/homeRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -15,7 +16,8 @@ app.use(express.json());
 
 // Rutas base
 app.use("/api/artisans", artisanRoutes);
-
+app.use("/api/products", productRoutes);
+app.use("/home", homeRoutes);
 // Iniciar servidor
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
