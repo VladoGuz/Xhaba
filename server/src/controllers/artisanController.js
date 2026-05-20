@@ -1,7 +1,7 @@
-const pool = require("../config/db");
+import pool from "../config/db.js";
 
 // Obtener todos los artesanos
-const getArtisans = async (req, res) => {
+export const getArtisans = async (req, res) => {
   try {
     const allArtisans = await pool.query(
       "SELECT * FROM artisans ORDER BY created_at DESC",
@@ -14,7 +14,7 @@ const getArtisans = async (req, res) => {
 };
 
 // Crear un nuevo artesano
-const createArtisan = async (req, res) => {
+export const createArtisan = async (req, res) => {
   try {
     const { name, community, state, bio } = req.body;
     const newArtisan = await pool.query(
@@ -28,7 +28,3 @@ const createArtisan = async (req, res) => {
   }
 };
 
-module.exports = {
-  getArtisans,
-  createArtisan,
-};
