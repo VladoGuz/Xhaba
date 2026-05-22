@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 // Fíjate en la extensión .js obligatoria
-import artisanRoutes from "./src/routes/artisanRoutes.js";
+import artisanRoutes from "./src/routes/artesanosRoutes.js";
 import productRoutes from "./src/routes/productRoutes.js";
 import homeRoutes from "./src/routes/homeRoutes.js";
 
