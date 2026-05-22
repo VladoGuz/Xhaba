@@ -25,7 +25,7 @@ function Cart() {
           <div className="bg-white p-12 text-center rounded-xl shadow-sm border border-gray-100">
             <p className="text-gray-500 text-lg">Aún no tienes prendas en tu bolsa.</p>
             <button 
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/catalog')}
               className="mt-6 bg-barro text-white px-6 py-2 rounded-lg hover:bg-[#8B3A2F] transition-colors"
             >
               Explorar Catálogo
