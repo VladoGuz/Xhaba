@@ -31,6 +31,7 @@ export const getProductsWithVariants = asyncHandler(async (req, res) => {
     FROM products p
     JOIN artisans a ON p.artisan_id = a.id
     LEFT JOIN product_variants pv ON p.id = pv.product_id
+    WHERE p.is_hidden = FALSE
     GROUP BY p.id, a.name, a.community
     ORDER BY p.title ASC;
   `;
@@ -73,7 +74,7 @@ export const getProductById = asyncHandler(async (req, res) => {
     FROM products p
     JOIN artisans a ON p.artisan_id = a.id
     LEFT JOIN product_variants pv ON p.id = pv.product_id
-    WHERE p.id = $1
+    WHERE p.id = $1 AND p.is_hidden = FALSE
     GROUP BY p.id, a.id, a.name, a.community, a.bio;
   `;
 
@@ -86,4 +87,59 @@ export const getProductById = asyncHandler(async (req, res) => {
   }
   
   res.json(result.rows[0]);
+});
+
+/**
+ * Crea un nuevo producto y su variante por defecto vinculada al artesano autenticado.
+ * POST /api/products
+ */
+export const createProduct = asyncHandler(async (req, res) => {
+  const { title, description, technique, material, category, base_price, stock, size_label } = req.body;
+  const artisanId = req.user.artisan_id; // Inyectado desde el token de autenticación
+
+  if (!artisanId) {
+    const err = new Error("No tienes un perfil de artesano registrado para publicar prendas");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  if (!title || !technique || !material || !category || !base_price || !stock) {
+    const err = new Error("Los campos título, técnica, material, categoría, precio y stock son obligatorios");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Insertar producto
+  const productQuery = `
+    INSERT INTO products (artisan_id, title, description, technique, material, category, base_price)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING id, title, category, base_price
+  `;
+  const productRes = await pool.query(productQuery, [
+    artisanId,
+    title.trim(),
+    description ? description.trim() : null,
+    technique.trim(),
+    material.trim(),
+    category.trim(),
+    parseFloat(base_price)
+  ]);
+
+  const product = productRes.rows[0];
+
+  // Insertar variante inicial por defecto
+  const variantQuery = `
+    INSERT INTO product_variants (product_id, color, size_label, stock)
+    VALUES ($1, 'Único/Tradicional', $2, $3)
+  `;
+  await pool.query(variantQuery, [
+    product.id,
+    size_label ? size_label.trim() : "Unitalla",
+    parseInt(stock, 10)
+  ]);
+
+  res.status(201).json({
+    message: "Prenda publicada con éxito en el catálogo de Xhaba",
+    product
+  });
 });

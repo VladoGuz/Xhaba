@@ -9,6 +9,7 @@ import artisanRoutes from "./src/routes/artesanosRoutes.js";
 import productRoutes from "./src/routes/productRoutes.js";
 import homeRoutes from "./src/routes/homeRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
+import adminRoutes from "./src/routes/adminRoutes.js";
 import { ensureDatabaseSchema } from "./src/config/alter_users_table.js";
 import { errorHandler } from "./src/middlewares/errorHandler.js";
 
@@ -25,6 +26,7 @@ app.use(cookieParser()); // Habilita a Express para analizar las cookies recibid
 
 // Rutas base
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/artisans", artisanRoutes);
 app.use("/api/products", productRoutes);
 app.use("/home", homeRoutes);
