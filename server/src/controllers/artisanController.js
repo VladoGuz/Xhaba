@@ -14,7 +14,7 @@ const getArtisans = async (req, res) => {
 };
 
 // Crear un nuevo artesano
-const createArtisan = async (req, res) => {
+export const createArtisan = async (req, res) => {
   try {
     const { name, community, state, bio } = req.body;
     const newArtisan = await pool.query(
@@ -26,9 +26,4 @@ const createArtisan = async (req, res) => {
     console.error(err.message);
     res.status(500).json({ error: "Error al crear artesano" });
   }
-};
-
-module.exports = {
-  getArtisans,
-  createArtisan,
 };

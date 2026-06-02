@@ -3,7 +3,7 @@ import pool from "../config/db.js";
 export const getProducts = async (req, res) => {
   try {
     const allProducts = await pool.query(
-      "SELECT * FROM products;",
+      "SELECT * FROM products ORDER BY id ASC;",
     );
     res.json(allProducts.rows);
   } catch (err) {
@@ -12,11 +12,8 @@ export const getProducts = async (req, res) => {
   }
 };
 
-
-
 export const getProductsWithVariants = async (req, res) => {
   try {
-    // La consulta SQL con agregación JSON
     const query = `
       SELECT 
         p.id AS product_id,
@@ -28,14 +25,13 @@ export const getProductsWithVariants = async (req, res) => {
         p.base_price,
         a.name AS artisan_name,
         a.community AS artisan_community,
-        -- Agrupamos las variantes en un array de objetos JSON
         COALESCE(
           json_agg(
             json_build_object(
               'variant_id', pv.id,
               'color', pv.color,
               'size', pv.size_label,
-              'measurements', pv.measurements, -- Tu campo JSONB se anida perfectamente
+              'measurements', pv.measurements,
               'stock', pv.stock
             )
           ) FILTER (WHERE pv.id IS NOT NULL), '[]'
@@ -51,8 +47,6 @@ export const getProductsWithVariants = async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error("Error ejecutando el JOIN:", err.message);
-    res
-      .status(500)
-      .json({ error: "Error al obtener el catálogo de productos" });
+    res.status(500).json({ error: "Error al obtener el catálogo de productos" });
   }
 };

@@ -7,5 +7,9 @@ export const productService = {
   
   getProductsBasic: async () => {
     return await apiFetch("/home/products");
+  },
+
+  getProductById: async (id) => {
+    return await apiFetch(`/api/products/${id}`);
   }
 };

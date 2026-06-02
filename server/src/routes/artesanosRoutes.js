@@ -6,4 +6,4 @@ const artisanController = require("../controllers/arteanosController");
 router.get("/", artisanController.getArtisans);
 router.post("/", artisanController.createArtisan);
 
-module.exports = router;
+export default router;

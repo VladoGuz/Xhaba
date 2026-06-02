@@ -8,6 +8,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import Login from './pages/Login';
+import Catalog from './pages/Catalog';
+import ProductDetail from './pages/ProductDetail';
 
 // Páginas del Cliente
 import Cart from './pages/Cart';
@@ -35,6 +37,8 @@ function App() {
         <Routes>
           {/* Rutas Públicas */}
           <Route path="/" element={<Home />} />
+          <Route path="/catalog" element={<Catalog />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/artisan/:id" element={<ArtisanProfile />} />

@@ -20,7 +20,7 @@ function ProductCard({ id, title, price, artisan, image, isUnique }) {
 
   return (
     <div className="bg-white rounded-2xl shadow-md border border-pink-100/50 overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group">
-      <div className="relative h-64 overflow-hidden">
+      <Link to={`/product/${id}`} className="relative h-64 overflow-hidden block">
         <img 
           src={image} 
           alt={title} 
@@ -31,15 +31,17 @@ function ProductCard({ id, title, price, artisan, image, isUnique }) {
             Pieza Única
           </span>
         )}
-      </div>
+      </Link>
       
       <div className="p-6 bg-gradient-to-b from-white to-pink-50/30">
-        <h3 className="text-xl font-medium text-gray-900 mb-2 group-hover:text-fuchsia-600 transition-colors">
-          {title}
-        </h3>
+        <Link to={`/product/${id}`}>
+          <h3 className="text-xl font-medium text-gray-900 mb-2 group-hover:text-fuchsia-600 transition-colors">
+            {title}
+          </h3>
+        </Link>
         
         <p className="text-sm text-gray-500 mb-4">
-          Por: <Link to={`/artisan/${id}`} className="text-rose-500 font-medium hover:underline">{artisan}</Link>
+          Por: <span className="text-rose-500 font-medium">{artisan}</span>
         </p>
 
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-pink-100">

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Menu, UserCircle, Shield, LogIn } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +7,19 @@ import { useAuth } from '../context/AuthContext';
 function Navbar() {
   const { cartItems } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/catalog');
+    }
+  };
 
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-pink-200/50 sticky top-0 z-50 shadow-sm transition-all duration-300">
@@ -25,16 +37,18 @@ function Navbar() {
 
           {/* Buscador (Oculto en móvil) */}
           <div className="hidden md:flex flex-1 max-w-xl mx-8">
-            <div className="relative w-full group">
+            <form onSubmit={handleSearchSubmit} className="relative w-full group">
               <input 
                 type="text" 
                 placeholder="Buscar textiles vibrantes..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white/50 border border-pink-100 rounded-full py-2.5 pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-pink-400/50 focus:border-pink-400 transition-all group-hover:shadow-md"
               />
-              <button className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-pink-500 transition-colors">
+              <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-pink-500 transition-colors">
                 <Search className="w-5 h-5" />
               </button>
-            </div>
+            </form>
           </div>
 
           {/* Íconos de Navegación */}
