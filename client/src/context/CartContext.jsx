@@ -1,17 +1,63 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { apiFetch } from '../services/api';
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState(() => {
-    // HU-03: Persistencia en local storage como mock de DB
-    const savedCart = localStorage.getItem('xhaba_cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const { user } = useAuth();
+  const [cartItems, setCartItems] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // 1. Cargar el carrito inicial (desde la base de datos si está logueado, sino local)
   useEffect(() => {
+    const loadCart = async () => {
+      setIsLoaded(false);
+      if (user && user.role === 'client') {
+        try {
+          const dbCart = await apiFetch("/api/cart");
+          if (Array.isArray(dbCart)) {
+            setCartItems(dbCart);
+          } else {
+            setCartItems([]);
+          }
+        } catch (err) {
+          console.error("Error al cargar el carrito desde la base de datos:", err);
+          // Fallback a localStorage
+          const savedCart = localStorage.getItem('xhaba_cart');
+          setCartItems(savedCart ? JSON.parse(savedCart) : []);
+        }
+      } else {
+        const savedCart = localStorage.getItem('xhaba_cart');
+        setCartItems(savedCart ? JSON.parse(savedCart) : []);
+      }
+      setIsLoaded(true);
+    };
+
+    loadCart();
+  }, [user]);
+
+  // 2. Sincronizar el carrito con localStorage y base de datos al cambiar
+  useEffect(() => {
+    if (!isLoaded) return;
+
     localStorage.setItem('xhaba_cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+
+    const syncWithDb = async () => {
+      if (user && user.role === 'client') {
+        try {
+          await apiFetch("/api/cart", {
+            method: "POST",
+            body: JSON.stringify({ cartItems })
+          });
+        } catch (err) {
+          console.error("Error al sincronizar el carrito con la base de datos:", err);
+        }
+      }
+    };
+
+    syncWithDb();
+  }, [cartItems, user, isLoaded]);
 
   const addToCart = (product) => {
     setCartItems(prev => {
@@ -31,7 +77,10 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setCartItems([]);
 
-  const total = cartItems.reduce((acc, item) => acc + (parseFloat(String(item.price).replace(',', '')) * item.quantity), 0);
+  const total = cartItems.reduce((acc, item) => {
+    const itemPrice = parseFloat(String(item.price).replace(/[^0-9.-]+/g, '')) || 0;
+    return acc + (itemPrice * item.quantity);
+  }, 0);
 
   return (
     <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, total }}>

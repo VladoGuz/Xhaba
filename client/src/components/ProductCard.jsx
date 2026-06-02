@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { getProductImageUrl } from '../utils/imageHelper';
 
 function ProductCard({ id, title, price, artisan, image, isUnique }) {
   const { addToCart } = useCart();
@@ -22,7 +23,7 @@ function ProductCard({ id, title, price, artisan, image, isUnique }) {
     <div className="bg-white rounded-2xl shadow-md border border-pink-100/50 overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group">
       <Link to={`/product/${id}`} className="relative h-64 overflow-hidden block">
         <img 
-          src={image} 
+          src={getProductImageUrl(image)} 
           alt={title} 
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />

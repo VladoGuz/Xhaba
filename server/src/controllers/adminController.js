@@ -88,3 +88,42 @@ export const toggleProductHide = asyncHandler(async (req, res) => {
     is_hidden: newStatus
   });
 });
+
+/**
+ * Obtener estadísticas reales de carritos abandonados
+ * GET /api/admin/abandoned-carts
+ */
+export const getAbandonedCartsStats = asyncHandler(async (req, res) => {
+  // 1. Carritos activos modificados en las últimas 24h
+  const countRes = await pool.query(
+    "SELECT COUNT(DISTINCT user_id) AS count FROM cart_items WHERE updated_at >= NOW() - INTERVAL '24 hours'"
+  );
+  const abandoned24h = parseInt(countRes.rows[0].count, 10);
+
+  // 2. Valor total perdido estimado
+  const valueRes = await pool.query(`
+    SELECT COALESCE(SUM(p.base_price * ci.quantity), 0) AS total
+    FROM cart_items ci
+    JOIN product_variants pv ON ci.variant_id = pv.id
+    JOIN products p ON pv.product_id = p.id
+  `);
+  const totalValue = parseFloat(valueRes.rows[0].total);
+
+  // 3. Tasa de recuperación (Órdenes exitosas vs Carritos totales)
+  const ordersRes = await pool.query("SELECT COUNT(*) AS count FROM orders WHERE status = 'completed'");
+  const completedOrders = parseInt(ordersRes.rows[0].count, 10);
+
+  const activeCartsRes = await pool.query("SELECT COUNT(DISTINCT user_id) AS count FROM cart_items");
+  const activeCarts = parseInt(activeCartsRes.rows[0].count, 10);
+
+  const totalInteractions = completedOrders + activeCarts;
+  const recoveryRate = totalInteractions > 0 
+    ? `${Math.round((completedOrders / totalInteractions) * 100)}%`
+    : "0%";
+
+  res.json({
+    abandoned24h,
+    totalValue,
+    recoveryRate
+  });
+});

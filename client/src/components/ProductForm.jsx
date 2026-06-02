@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Tag, Image as ImageIcon, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { apiFetch } from '../services/api';
+import { AVAILABLE_PRODUCT_IMAGES, getProductImageUrl } from '../utils/imageHelper';
 
 function ProductForm() {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ function ProductForm() {
     description: '',
     technique: 'Bordado a mano',
     material: 'Manta natural',
+    image_name: 'valles1.jpg',
   });
 
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,7 @@ function ProductForm() {
           base_price: parseFloat(formData.base_price),
           stock: parseInt(formData.stock, 10),
           size_label: formData.size_label,
+          image_name: formData.image_name,
         })
       });
 
@@ -56,6 +59,7 @@ function ProductForm() {
         description: '',
         technique: 'Bordado a mano',
         material: 'Manta natural',
+        image_name: 'valles1.jpg',
       });
     } catch (err) {
       console.error("Error al registrar prenda en catálogo:", err);
@@ -96,7 +100,7 @@ function ProductForm() {
               value={formData.category} 
               onChange={handleChange}
               disabled={loading}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all text-gray-700"
             >
               <option>Huipiles</option>
               <option>Blusas</option>
@@ -114,7 +118,7 @@ function ProductForm() {
               placeholder="Ej: Unitalla, M, G" 
               onChange={handleChange}
               disabled={loading}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all" 
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all text-gray-700" 
             />
           </div>
         </div>
@@ -131,7 +135,7 @@ function ProductForm() {
               placeholder="Ej: Huipil de Gala tradicional"
               onChange={handleChange} 
               disabled={loading}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all" 
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all text-gray-700" 
             />
           </div>
         </div>
@@ -144,7 +148,7 @@ function ProductForm() {
               value={formData.technique} 
               onChange={handleChange}
               disabled={loading}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all text-gray-700"
             >
               <option>Bordado a mano</option>
               <option>Telar de pedal</option>
@@ -160,7 +164,7 @@ function ProductForm() {
               value={formData.material} 
               onChange={handleChange}
               disabled={loading}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all text-gray-700"
             >
               <option>Manta natural</option>
               <option>Algodón</option>
@@ -182,7 +186,7 @@ function ProductForm() {
               placeholder="Ej: 1500"
               onChange={handleChange} 
               disabled={loading}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all" 
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all text-gray-700" 
             />
           </div>
           <div>
@@ -195,7 +199,7 @@ function ProductForm() {
               placeholder="Ej: 3"
               onChange={handleChange} 
               disabled={loading}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all" 
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all text-gray-700" 
             />
           </div>
         </div>
@@ -209,15 +213,36 @@ function ProductForm() {
             onChange={handleChange}
             disabled={loading}
             placeholder="Explica el significado de las grecas, las flores o la técnica utilizada..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg min-h-[100px] focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg min-h-[100px] focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all text-gray-700"
           ></textarea>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Fotos de la Prenda (Visual)</label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition-colors cursor-pointer">
-            <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">Imágenes se cargan automáticamente desde Unsplash en la demostración</p>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Foto de la Prenda</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <div>
+              <span className="text-xs text-gray-500 block mb-1">Selecciona una imagen del catálogo:</span>
+              <select
+                name="image_name"
+                value={formData.image_name}
+                onChange={handleChange}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all text-sm text-gray-700"
+              >
+                {AVAILABLE_PRODUCT_IMAGES.map((img) => (
+                  <option key={img.name} value={img.name}>
+                    {img.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="relative h-32 w-full rounded-lg overflow-hidden border border-gray-300 bg-white flex items-center justify-center">
+              <img
+                src={getProductImageUrl(formData.image_name)}
+                alt="Vista previa de prenda"
+                className="h-full w-full object-cover"
+              />
+            </div>
           </div>
         </div>
 

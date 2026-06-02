@@ -4,6 +4,7 @@ import { ShoppingBag, ChevronLeft, Heart, ShieldCheck, Truck, RefreshCw, Sparkle
 import { productService } from '../services/product.service';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { getProductImageUrl } from '../utils/imageHelper';
 
 function ProductDetail() {
   const { id } = useParams();
@@ -108,7 +109,7 @@ function ProductDetail() {
       title: `${product.title} (${selectedColor} - ${selectedSize})`,
       price: product.base_price,
       artisan: `${product.artisan_name} (${product.artisan_community})`,
-      image: "https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?q=80&w=600&auto=format&fit=crop",
+      image: product.images && product.images[0] ? product.images[0] : 'valles1.jpg',
       color: selectedColor,
       size: selectedSize,
     });
@@ -163,7 +164,7 @@ function ProductDetail() {
             <div className="p-6 md:p-8 bg-gradient-to-br from-pink-50/20 to-white flex flex-col justify-center relative border-b lg:border-b-0 lg:border-r border-gray-100">
               <div className="relative rounded-2xl overflow-hidden shadow-inner aspect-square max-h-[500px] mx-auto w-full group">
                 <img 
-                  src="https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?q=80&w=600&auto=format&fit=crop" 
+                  src={getProductImageUrl(product.images && product.images[0])} 
                   alt={product.title} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />

@@ -31,6 +31,30 @@ export const ensureDatabaseSchema = async () => {
       );
     `);
 
+    // 4. Crear tabla de product_images si no existe
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_images (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        image_name VARCHAR(255) NOT NULL,
+        is_primary BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 5. Crear tabla de cart_items si no existe
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS cart_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        variant_id UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+        quantity INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (user_id, variant_id)
+      );
+    `);
+
     console.log("✅ Database columns and tables checked.");
 
     // 4. Sembrar el perfil del artesano "Familia Mendoza" si no existe
@@ -101,6 +125,30 @@ export const ensureDatabaseSchema = async () => {
         VALUES 
           ($1, 2),
           ($2, 5)
+      `, [p1Id, p2Id]);
+
+      // Agregar fotos para los productos
+      await pool.query(`
+        INSERT INTO product_images (product_id, image_name, is_primary)
+        VALUES 
+          ($1, 'valles1.jpg', TRUE),
+          ($1, 'valles3.jpg', FALSE),
+          ($2, 'valles2.jpg', TRUE)
+      `, [p1Id, p2Id]);
+    }
+
+    // Sembrar fotos para los productos existentes si la tabla de fotos está vacía
+    const imagesCheck = await pool.query("SELECT COUNT(*) FROM product_images");
+    if (parseInt(imagesCheck.rows[0].count, 10) === 0) {
+      console.log("Seeding product images for existing products...");
+      const p1Id = "d1111111-1111-1111-1111-111111111111";
+      const p2Id = "d2222222-2222-2222-2222-222222222222";
+      await pool.query(`
+        INSERT INTO product_images (product_id, image_name, is_primary)
+        VALUES 
+          ($1, 'valles1.jpg', TRUE),
+          ($1, 'valles3.jpg', FALSE),
+          ($2, 'valles2.jpg', TRUE)
       `, [p1Id, p2Id]);
     }
 

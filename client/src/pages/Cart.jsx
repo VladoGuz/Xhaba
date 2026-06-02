@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { getProductImageUrl } from '../utils/imageHelper';
 
 /**
  * Componente Cart (Historia de Usuario HU-03)
@@ -38,7 +39,7 @@ function Cart() {
                 <li key={item.id} className="p-6 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <img 
-                      src={item.image} 
+                      src={getProductImageUrl(item.image)} 
                       alt={item.title} 
                       className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                     />

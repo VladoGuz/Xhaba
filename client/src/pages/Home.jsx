@@ -71,7 +71,7 @@ function Home() {
                 title={product.title}
                 price={product.base_price}
                 artisan={`${product.artisan_name} (${product.artisan_community})`}
-                //image="https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?q=80&w=600&auto=format&fit=crop"
+                image={product.images && product.images[0] ? product.images[0] : 'papaloapan1.jpg'}
                 isUnique={isUnique}
               />
             );

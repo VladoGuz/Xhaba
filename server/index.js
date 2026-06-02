@@ -10,6 +10,8 @@ import productRoutes from "./src/routes/productRoutes.js";
 import homeRoutes from "./src/routes/homeRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
+import orderRoutes from "./src/routes/orderRoutes.js";
+import cartRoutes from "./src/routes/cartRoutes.js";
 import { ensureDatabaseSchema } from "./src/config/alter_users_table.js";
 import { errorHandler } from "./src/middlewares/errorHandler.js";
 
@@ -29,6 +31,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/artisans", artisanRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/cart", cartRoutes);
 app.use("/home", homeRoutes);
 
 // Middleware global de manejo de errores (siempre al final de la cola)
