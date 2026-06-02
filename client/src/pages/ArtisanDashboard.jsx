@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import ProductForm from '../components/ProductForm';
 import InventoryList from '../components/InventoryList';
 import Reputation from '../components/Reputation';
+import { useAuth } from '../context/AuthContext';
+import { LogOut } from 'lucide-react';
 
 /**
  * Componente ArtisanDashboard (Panel de Artesano)
@@ -11,13 +13,23 @@ import Reputation from '../components/Reputation';
  * - HU-07: Reputación (Reputation)
  */
 function ArtisanDashboard() {
+  const { logout } = useAuth();
   // Estado para manejar la navegación entre pestañas
   const [activeTab, setActiveTab] = useState('inventory'); // inventory | new | reputation
 
   return (
     <div className="min-h-screen bg-manta py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-serif font-bold text-barro mb-8">Panel de Artesano</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-serif font-bold text-barro">Panel de Artesano</h1>
+          <button 
+            onClick={logout}
+            className="flex items-center gap-2 bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors shadow-sm text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            Cerrar Sesión
+          </button>
+        </div>
         
         {/* Tabs */}
         <div className="flex gap-4 mb-8 border-b border-gray-200">

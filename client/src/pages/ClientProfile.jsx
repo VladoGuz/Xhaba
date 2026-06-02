@@ -41,8 +41,22 @@ function ClientProfile() {
                 <button className="bg-gray-50 border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">Cambiar Foto</button>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <input type="text" defaultValue={user?.name} className="px-4 py-2 border rounded-lg w-full" />
-                <input type="email" defaultValue="juan@email.com" className="px-4 py-2 border rounded-lg w-full" />
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Nombre Completo</label>
+                  <input type="text" readOnly defaultValue={user?.name} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
+                  <input type="email" readOnly defaultValue={user?.email} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Edad</label>
+                  <input type="text" readOnly defaultValue={user?.age ? `${user.age} años` : "No especificada"} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Rol de Cuenta</label>
+                  <input type="text" readOnly defaultValue={user?.role} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none capitalize" />
+                </div>
               </div>
             </div>
           )}
@@ -51,8 +65,10 @@ function ClientProfile() {
             <div>
               <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6 flex items-center gap-2"><MapPin className="w-6 h-6 text-barro" /> Mis Direcciones</h2>
               <div className="border border-gray-200 p-4 rounded-lg mb-4">
-                <p className="font-medium">Casa Principal</p>
-                <p className="text-sm text-gray-600">Oaxaca de Juárez, Centro. CP 68000</p>
+                <p className="font-medium">Dirección de Registro</p>
+                <p className="text-sm text-gray-600">
+                  {user?.municipio && user?.barrio ? `${user.municipio}, ${user.barrio} (Valles Centrales)` : "No se ha registrado ninguna dirección."}
+                </p>
               </div>
               <button className="text-barro font-medium hover:underline">+ Añadir nueva dirección</button>
             </div>

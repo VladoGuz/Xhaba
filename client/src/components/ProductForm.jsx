@@ -85,7 +85,7 @@ function ProductForm() {
           </div>
         </div>
 
-        <button type="submit" className="flex items-center justify-center gap-2 w-full bg-barro text-white py-3 rounded-lg font-medium hover:bg-[#8B3A2F] transition-colors">
+        <button type="submit" className="flex items-center justify-center gap-2 w-full bg-barro text-white py-3 rounded-lg font-medium hover:bg-cochinilla transition-colors">
           <Upload className="w-5 h-5" />
           Publicar Prenda
         </button>

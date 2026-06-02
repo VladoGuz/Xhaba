@@ -95,7 +95,7 @@ function Checkout() {
             <button 
               type="submit" 
               disabled={status === 'loading'}
-              className="w-full bg-barro text-white py-3 rounded-lg font-medium hover:bg-[#8B3A2F] transition-colors shadow-sm disabled:opacity-50"
+              className="w-full bg-barro text-white py-3 rounded-lg font-medium hover:bg-cochinilla transition-colors shadow-sm disabled:opacity-50"
             >
               {status === 'loading' ? 'Procesando pago...' : 'Pagar Ahora'}
             </button>

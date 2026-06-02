@@ -65,7 +65,7 @@ function ReviewForm({ artisanId }) {
 
       <button 
         type="submit"
-        className="bg-barro text-white px-6 py-2 rounded-lg font-medium hover:bg-[#8B3A2F] transition-colors"
+        className="bg-barro text-white px-6 py-2 rounded-lg font-medium hover:bg-cochinilla transition-colors"
       >
         Enviar Valoración
       </button>

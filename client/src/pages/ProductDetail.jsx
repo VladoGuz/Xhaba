@@ -319,12 +319,12 @@ function ProductDetail() {
         </section>
 
         {/* SECCION SECUNDARIA: HISTORIA DEL CREADOR (EL ALMA DE LA PRENDA) */}
-        <section className="bg-gradient-to-br from-[#8B3A2F]/10 via-[#B35446]/5 to-white rounded-3xl p-8 md:p-12 border border-[#8B3A2F]/10 flex flex-col md:flex-row items-center gap-8 shadow-inner">
-          <div className="w-20 h-20 bg-gradient-to-tr from-[#8B3A2F] to-[#B35446] rounded-full flex items-center justify-center text-white shrink-0 shadow-lg">
+        <section className="bg-gradient-to-br from-cochinilla/10 via-cempasuchil/5 to-white rounded-3xl p-8 md:p-12 border border-cochinilla/10 flex flex-col md:flex-row items-center gap-8 shadow-inner">
+          <div className="w-20 h-20 bg-gradient-to-tr from-cochinilla to-cempasuchil rounded-full flex items-center justify-center text-white shrink-0 shadow-lg">
             <UserCheck className="w-10 h-10" />
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-2 bg-white/50 border border-[#8B3A2F]/15 px-3 py-1 rounded-full w-fit text-[10px] font-bold text-[#8B3A2F] tracking-widest uppercase">
+            <div className="flex items-center gap-2 mb-2 bg-white/50 border border-cochinilla/15 px-3 py-1 rounded-full w-fit text-[10px] font-bold text-cochinilla tracking-widest uppercase">
               <span>EL ALMA DE LA PRENDA</span>
             </div>
             <h2 className="text-2xl font-serif font-black text-gray-900 mb-3">
@@ -333,7 +333,7 @@ function ProductDetail() {
             <p className="text-gray-700 leading-relaxed max-w-4xl font-medium">
               {product.artisan_bio || "Esta hermosa pieza artesanal ha sido confeccionada con devoción e historia por manos tejedoras oaxaqueñas. Cada bordado y patrón representa años de legado familiar y tradiciones transmitidas de generación en generación."}
             </p>
-            <p className="text-xs font-semibold text-[#B35446] mt-4">
+            <p className="text-xs font-semibold text-cempasuchil mt-4">
               📍 Creado en la comunidad de: {product.artisan_community}, Oaxaca.
             </p>
           </div>

@@ -26,7 +26,7 @@ function Cart() {
             <p className="text-gray-500 text-lg">Aún no tienes prendas en tu bolsa.</p>
             <button 
               onClick={() => navigate('/catalog')}
-              className="mt-6 bg-barro text-white px-6 py-2 rounded-lg hover:bg-[#8B3A2F] transition-colors"
+              className="mt-6 bg-barro text-white px-6 py-2 rounded-lg hover:bg-cochinilla transition-colors"
             >
               Explorar Catálogo
             </button>
@@ -64,7 +64,7 @@ function Cart() {
               </div>
               <button 
                 onClick={() => navigate('/checkout')}
-                className="w-full sm:w-auto bg-barro text-white px-8 py-3 rounded-lg font-medium hover:bg-[#8B3A2F] transition-colors shadow-sm"
+                className="w-full sm:w-auto bg-barro text-white px-8 py-3 rounded-lg font-medium hover:bg-cochinilla transition-colors shadow-sm"
               >
                 Proceder al Pago
               </button>

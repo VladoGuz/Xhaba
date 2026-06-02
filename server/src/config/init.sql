@@ -37,7 +37,10 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
-    role VARCHAR(50) DEFAULT 'client'
+    role VARCHAR(50) DEFAULT 'client',
+    age INTEGER,
+    municipio VARCHAR(255),
+    barrio VARCHAR(255)
 );
 
 CREATE TABLE orders (
