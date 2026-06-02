@@ -52,8 +52,8 @@ function Home() {
       ) : error ? (
         <div className="text-center py-12 bg-white rounded-2xl border border-pink-100 p-8 shadow-sm">
           <p className="text-red-500 font-semibold text-lg">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="mt-4 bg-grana text-white px-6 py-2 rounded-xl text-sm font-bold shadow hover:bg-grana-dark transition-all"
           >
             Reintentar
@@ -65,13 +65,13 @@ function Home() {
           {products.slice(0, 6).map((product) => {
             const isUnique = product.variants && product.variants.some(v => v.stock === 1);
             return (
-              <ProductCard 
+              <ProductCard
                 key={product.product_id || product.id}
                 id={product.product_id || product.id}
                 title={product.title}
                 price={product.base_price}
                 artisan={`${product.artisan_name} (${product.artisan_community})`}
-                image="https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?q=80&w=600&auto=format&fit=crop"
+                //image="https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?q=80&w=600&auto=format&fit=crop"
                 isUnique={isUnique}
               />
             );
