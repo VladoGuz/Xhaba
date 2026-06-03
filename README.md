@@ -19,11 +19,36 @@
 
 Para explorar los paneles y flujos de la aplicación, utiliza las siguientes credenciales de prueba preconfiguradas:
 
+### Cuentas Principales de Demo
+
 | Rol de Cuenta | Correo Electrónico | Contraseña | Funcionalidad Clave |
 | :--- | :--- | :--- | :--- |
 | **Cliente / Comprador** | `client@xhaba.com` | `client123` | Añadir al carrito, persistencia y pasarela de pago. |
-| **Artesano / Vendedor** | `artisan@xhaba.com` | `artisan123` | Registrar nuevas prendas con imágenes y gestionar inventarios. |
+| **Artesano / Vendedor (Familia Mendoza)** | `artisan@xhaba.com` | `artisan123` | Registrar nuevas prendas con imágenes y gestionar inventarios. |
 | **Administrador / Moderador** | `admin@xhaba.com` | `admin123` | Banear cuentas, ocultar prendas y monitorear carritos abandonados. |
+
+### Cuentas de Artesanos Regionales (Oaxaca)
+Todos los artesanos regionales comparten la contraseña **`artisan123`** y tienen acceso al panel de artesano, sus biografías, comunidades y productos cargados:
+
+| Región | Artesano(a) | Correo Electrónico | Comunidad Sembrada |
+| :--- | :--- | :--- | :--- |
+| **Valles Centrales** | Sofía Martínez | `sofia.valles@xhaba.com` | Teotitlán del Valle |
+| **Valles Centrales** | Carlos Ruiz | `carlos.valles@xhaba.com` | Mitla |
+| **Istmo** | Juana López | `juana.istmo@xhaba.com` | Juchitán de Zaragoza |
+| **Istmo** | Xhunaxhi Jiménez | `xhunaxhi.istmo@xhaba.com` | Santo Domingo Tehuantepec |
+| **Istmo** | Maritza Toledo | `maritza.istmo@xhaba.com` | Ixtepec |
+| **Costa** | Petra Silva | `petra.costa@xhaba.com` | Santiago Pinotepa Nacional |
+| **Costa** | Elena Salinas | `elena.costa@xhaba.com` | San Pedro Amuzgos |
+| **Costa** | Antonia Reyes | `antonia.costa@xhaba.com` | Santa María Huazolotitlán |
+| **Mixteca** | Gudelia Hernández | `gudelia.mixteca@xhaba.com` | San Juan Copala |
+| **Mixteca** | Maximina Castro | `maximina.mixteca@xhaba.com` | Heroica Ciudad de Tlaxiaco |
+| **Mixteca** | Ismael López | `ismael.mixteca@xhaba.com` | Santiago Yosondúa |
+| **Papaloapan** | Fulgencia Cruz | `fulgencia.papaloapan@xhaba.com` | Jalapa de Díaz |
+| **Papaloapan** | Paula Ortiz | `paula.papaloapan@xhaba.com` | San Felipe Usila |
+| **Papaloapan** | Tomasa García | `tomasa.papaloapan@xhaba.com` | Valle Nacional |
+| **Cañada** | Manuela Merino | `manuela.canada@xhaba.com` | Huautla de Jiménez |
+| **Cañada** | Avelina Allende | `avelina.canada@xhaba.com` | San Jerónimo Tecóatl |
+| **Cañada** | Clementina Prado | `clementina.canada@xhaba.com` | Teotitlán de Flores Magón |
 
 ---
 
