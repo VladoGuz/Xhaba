@@ -1,6 +1,7 @@
 import express from "express";
-import { getProductsWithVariants, getProductById, createProduct } from "../controllers/productController.js";
+import { getProductsWithVariants, getProductById, createProduct, updateProductImage } from "../controllers/productController.js";
 import { authenticateToken } from "../middlewares/authMiddleware.js";
+import { upload } from "../middlewares/upload.js";
 
 const router = express.Router();
 
@@ -24,6 +25,13 @@ router.get("/:id", getProductById);
  * @desc    Crea una nueva prenda asociada a la cuenta del artesano autenticado.
  * @access  Privado (Requiere sesión iniciada)
  */
-router.post("/", authenticateToken, createProduct);
+router.post("/", authenticateToken, upload.single('image'), createProduct);
+
+/**
+ * @route   PUT /api/products/:id/image
+ * @desc    Actualiza la imagen principal de un producto. Elimina físicamente la imagen anterior para evitar basura.
+ * @access  Privado (Artesano propietario)
+ */
+router.put("/:id/image", authenticateToken, upload.single('image'), updateProductImage);
 
 export default router;

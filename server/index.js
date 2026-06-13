@@ -4,6 +4,11 @@ import cookieParser from "cookie-parser";
 
 // Carga y validación inicial de variables de entorno y configuración del servidor
 import { config } from "./src/config/env.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Importación de rutas de la API REST
 import artisanRoutes from "./src/routes/artesanosRoutes.js";
@@ -37,6 +42,9 @@ app.use(cors({
 // Middlewares globales de parsing de Express
 app.use(express.json()); // Analiza el cuerpo (body) de las peticiones entrantes con formato JSON
 app.use(cookieParser()); // Analiza las cookies adjuntas en las cabeceras HTTP y las inyecta en req.cookies
+
+// Servir estáticamente los archivos subidos (fotos de prendas)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Registro de enrutadores correspondientes a los diferentes módulos de la API de Xhaba
 app.use("/api/auth", authRoutes);       // Registro, login, logout, perfil actual

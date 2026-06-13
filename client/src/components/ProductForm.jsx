@@ -1,21 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Upload, Tag, Image as ImageIcon, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { apiFetch } from '../services/api';
-import { AVAILABLE_PRODUCT_IMAGES, getProductImageUrl } from '../utils/imageHelper';
 
 /**
  * Componente ProductForm (Formulario de Registro de Prendas).
- * 
- * Cumple con la Historia de Usuario HU-05. Proporciona una interfaz estructurada
- * para que los artesanos puedan publicar nuevas prendas hechas a mano en el catálogo.
- * 
- * Características clave:
- * 1. Campos específicos de procedencia artesanal: técnica (ej. Telar de pedal) y material (ej. Lana).
- * 2. Visualizador y selector dinámico de imágenes utilizando el helper de Vite (`getProductImageUrl`).
- * 3. Envío de datos tipados (conversión de stock a entero y precio a flotante).
- * 4. Petición POST a `/api/products` para registrar el producto y su variante inicial en una transacción única.
  */
 function ProductForm() {
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     category: 'Huipiles',
     title: '',
@@ -25,8 +16,10 @@ function ProductForm() {
     description: '',
     technique: 'Bordado a mano',
     material: 'Manta natural',
-    image_name: 'valles1.jpg',
   });
+  
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -42,22 +35,28 @@ function ProductForm() {
       return;
     }
 
+    if (!imageFile) {
+      setError("Debes seleccionar una imagen para la prenda.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const payload = new FormData();
+      payload.append('title', formData.title);
+      payload.append('description', formData.description);
+      payload.append('technique', formData.technique);
+      payload.append('material', formData.material);
+      payload.append('category', formData.category);
+      payload.append('base_price', formData.base_price);
+      payload.append('stock', formData.stock);
+      payload.append('size_label', formData.size_label);
+      payload.append('image', imageFile);
+
       await apiFetch("/api/products", {
         method: "POST",
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          technique: formData.technique,
-          material: formData.material,
-          category: formData.category,
-          base_price: parseFloat(formData.base_price),
-          stock: parseInt(formData.stock, 10),
-          size_label: formData.size_label,
-          image_name: formData.image_name,
-        })
+        body: payload
       });
 
       setSuccess(true);
@@ -71,8 +70,12 @@ function ProductForm() {
         description: '',
         technique: 'Bordado a mano',
         material: 'Manta natural',
-        image_name: 'valles1.jpg',
       });
+      setImageFile(null);
+      setImagePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (err) {
       console.error("Error al registrar prenda en catálogo:", err);
       setError(err.message || "No se pudo registrar la prenda en la base de datos.");
@@ -83,6 +86,20 @@ function ProductForm() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validar 5MB max
+      if (file.size > 5 * 1024 * 1024) {
+        setError("La imagen no debe pesar más de 5MB");
+        return;
+      }
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      setError(null);
+    }
   };
 
   return (
@@ -233,27 +250,29 @@ function ProductForm() {
           <label className="block text-sm font-medium text-gray-700 mb-2">Foto de la Prenda</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
             <div>
-              <span className="text-xs text-gray-500 block mb-1">Selecciona una imagen del catálogo:</span>
-              <select
-                name="image_name"
-                value={formData.image_name}
-                onChange={handleChange}
+              <span className="text-xs text-gray-500 block mb-1">Sube una foto desde tu equipo (Máx. 5MB):</span>
+              <input 
+                type="file" 
+                accept="image/jpeg, image/png, image/webp"
+                onChange={handleImageChange}
                 disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all text-sm text-gray-700"
-              >
-                {AVAILABLE_PRODUCT_IMAGES.map((img) => (
-                  <option key={img.name} value={img.name}>
-                    {img.label}
-                  </option>
-                ))}
-              </select>
+                ref={fileInputRef}
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-barro file:text-white hover:file:bg-cochinilla cursor-pointer transition-colors"
+              />
             </div>
             <div className="relative h-32 w-full rounded-lg overflow-hidden border border-gray-300 bg-white flex items-center justify-center">
-              <img
-                src={getProductImageUrl(formData.image_name)}
-                alt="Vista previa de prenda"
-                className="h-full w-full object-cover"
-              />
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Vista previa de prenda"
+                  className="h-full w-full object-cover object-center"
+                />
+              ) : (
+                <div className="text-gray-400 flex flex-col items-center">
+                  <ImageIcon className="w-8 h-8 mb-1 opacity-50" />
+                  <span className="text-xs font-medium">Sin imagen</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

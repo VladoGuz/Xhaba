@@ -1,46 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { Save, AlertCircle, Loader } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Save, AlertCircle, Loader, Image as ImageIcon, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 
 /**
  * Componente InventoryList (Inventario del Artesano).
- * 
- * Cumple con la Historia de Usuario HU-06. Proporciona a los maestros artesanos
- * una vista de tabla interactiva para administrar existencias (stock) de sus variantes de productos.
- * 
- * Características clave:
- * 1. Recupera el `artisan_id` del usuario logueado en el frontend.
- * 2. Carga todas las prendas vinculadas a dicho artesano desde `/api/artisans/:id/products`.
- * 3. Permite edición rápida "in-line" de existencias mediante entradas numéricas en cada celda.
- * 4. Envía actualizaciones inmediatas al backend por medio de una petición PUT a `/api/artisans/variants/:variant_id/stock`.
  */
 function InventoryList() {
   const { user } = useAuth();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const fileInputRef = useRef(null);
+  const [uploadingImageId, setUploadingImageId] = useState(null);
 
-  // Cargar inventario del artesano logueado
+  const fetchInventory = async () => {
+    if (!user || !user.artisan_id) {
+      setError("No tienes un perfil de artesano vinculado a esta cuenta.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await apiFetch(`/api/artisans/${user.artisan_id}/products`);
+      setInventory(data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error al obtener inventario del artesano:", err);
+      setError("Ocurrió un error al cargar tu inventario.");
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchInventory = async () => {
-      if (!user || !user.artisan_id) {
-        setError("No tienes un perfil de artesano vinculado a esta cuenta.");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const data = await apiFetch(`/api/artisans/${user.artisan_id}/products`);
-        setInventory(data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error al obtener inventario del artesano:", err);
-        setError("Ocurrió un error al cargar tu inventario.");
-        setLoading(false);
-      }
-    };
-
     fetchInventory();
   }, [user]);
 
@@ -60,6 +53,43 @@ function InventoryList() {
     } catch (err) {
       console.error("Error al actualizar stock de variante:", err);
       alert(err.message || "No se pudo guardar el stock.");
+    }
+  };
+
+  const handleImageClick = (productId) => {
+    setUploadingImageId(productId);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !uploadingImageId) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("La imagen no debe pesar más de 5MB");
+      return;
+    }
+
+    try {
+      const payload = new FormData();
+      payload.append('image', file);
+
+      await apiFetch(`/api/products/${uploadingImageId}/image`, {
+        method: "PUT",
+        body: payload
+      });
+
+      alert("Imagen actualizada correctamente");
+      // Refrescar inventario si es necesario (el endpoint actual de artesanos devuelve variantes, quizá no imágenes directamente, pero es buena práctica)
+      fetchInventory();
+    } catch (err) {
+      console.error("Error al actualizar imagen:", err);
+      alert(err.message || "Ocurrió un error al actualizar la imagen.");
+    } finally {
+      setUploadingImageId(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -85,8 +115,16 @@ function InventoryList() {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="p-6 border-b border-gray-100">
         <h2 className="text-2xl font-serif font-bold text-gray-900">Mi Inventario (Real-time BD)</h2>
-        <p className="text-gray-500 mt-1">Actualiza rápidamente tu disponibilidad si vendes físicamente.</p>
+        <p className="text-gray-500 mt-1">Actualiza rápidamente tu disponibilidad y fotos si vendes físicamente.</p>
       </div>
+
+      <input 
+        type="file" 
+        accept="image/jpeg, image/png, image/webp"
+        style={{ display: 'none' }}
+        ref={fileInputRef}
+        onChange={handleFileChange}
+      />
 
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -96,13 +134,14 @@ function InventoryList() {
               <th className="p-4 font-medium">Variante (Color / Talla)</th>
               <th className="p-4 font-medium">Precio</th>
               <th className="p-4 font-medium">Stock Actual</th>
+              <th className="p-4 font-medium">Foto</th>
               <th className="p-4 font-medium">Acción</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {inventory.length === 0 ? (
               <tr>
-                <td colSpan="5" className="p-8 text-center text-gray-500 font-medium">Aún no has registrado ninguna prenda en tu catálogo.</td>
+                <td colSpan="6" className="p-8 text-center text-gray-500 font-medium">Aún no has registrado ninguna prenda en tu catálogo.</td>
               </tr>
             ) : (
               inventory.map((item) => (
@@ -120,6 +159,16 @@ function InventoryList() {
                       className="w-20 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-barro outline-none"
                       min="0"
                     />
+                  </td>
+                  <td className="p-4">
+                    <button 
+                      onClick={() => handleImageClick(item.product_id)}
+                      className="flex items-center gap-1 text-sm text-fuchsia-600 hover:text-fuchsia-800 transition-colors font-medium"
+                      title="Cambiar foto de la prenda"
+                    >
+                      <ImageIcon className="w-4 h-4" /> 
+                      {uploadingImageId === item.product_id ? <Loader className="w-3 h-3 animate-spin" /> : "Cambiar Foto"}
+                    </button>
                   </td>
                   <td className="p-4">
                     <button 

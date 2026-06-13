@@ -33,7 +33,7 @@ export const register = asyncHandler(async (req, res) => {
   const newUserQuery = `
     INSERT INTO users (name, email, password_hash, age, municipio, barrio, role)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id, name, email, age, municipio, barrio, role
+    RETURNING id, name, email, age, municipio, barrio, role, profile_picture
   `;
   
   const newUser = await pool.query(newUserQuery, [
@@ -108,7 +108,8 @@ export const login = asyncHandler(async (req, res) => {
       age: user.age,
       municipio: user.municipio,
       barrio: user.barrio,
-      role: user.role
+      role: user.role,
+      profile_picture: user.profile_picture
     }
   });
 });
@@ -139,7 +140,7 @@ export const logout = asyncHandler(async (req, res) => {
  */
 export const getMe = asyncHandler(async (req, res) => {
   const userQuery = await pool.query(
-    "SELECT id, name, email, age, municipio, barrio, role FROM users WHERE id = $1",
+    "SELECT id, name, email, age, municipio, barrio, role, profile_picture FROM users WHERE id = $1",
     [req.user.id]
   );
 
@@ -151,5 +152,78 @@ export const getMe = asyncHandler(async (req, res) => {
 
   res.json({
     user: userQuery.rows[0]
+  });
+});
+
+import fs from 'fs';
+import path from 'path';
+
+/**
+ * Sube o actualiza la foto de perfil del usuario.
+ * 
+ * @route   PUT /api/auth/avatar
+ * @access  Privado
+ */
+export const uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    const err = new Error("No se ha proporcionado ninguna imagen");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const userId = req.user.id;
+  const newImageName = req.file.filename;
+
+  // Obtener usuario para eliminar foto anterior si existe
+  const userQuery = await pool.query("SELECT profile_picture FROM users WHERE id = $1", [userId]);
+  const oldPicture = userQuery.rows[0]?.profile_picture;
+
+  if (oldPicture) {
+    const oldPath = path.join(process.cwd(), 'uploads', oldPicture);
+    if (fs.existsSync(oldPath)) {
+      fs.unlinkSync(oldPath);
+    }
+  }
+
+  // Actualizar BD
+  await pool.query(
+    "UPDATE users SET profile_picture = $1 WHERE id = $2",
+    [newImageName, userId]
+  );
+
+  res.json({
+    message: "Foto de perfil actualizada",
+    profile_picture: newImageName
+  });
+});
+
+/**
+ * Elimina la foto de perfil del usuario.
+ * 
+ * @route   DELETE /api/auth/avatar
+ * @access  Privado
+ */
+export const deleteAvatar = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const userQuery = await pool.query("SELECT profile_picture FROM users WHERE id = $1", [userId]);
+  const oldPicture = userQuery.rows[0]?.profile_picture;
+
+  if (oldPicture) {
+    const oldPath = path.join(process.cwd(), 'uploads', oldPicture);
+    if (fs.existsSync(oldPath)) {
+      fs.unlinkSync(oldPath);
+    }
+  }
+
+  // Actualizar BD a null
+  await pool.query(
+    "UPDATE users SET profile_picture = NULL WHERE id = $1",
+    [userId]
+  );
+
+  res.json({
+    message: "Foto de perfil eliminada",
+    profile_picture: null
   });
 });

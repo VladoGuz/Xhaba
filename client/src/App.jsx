@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -10,6 +10,8 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Catalog from './pages/Catalog';
 import ProductDetail from './pages/ProductDetail';
+import AboutUs from './pages/AboutUs';
+import Terms from './pages/Terms';
 
 // Páginas del Cliente
 import Cart from './pages/Cart';
@@ -43,12 +45,15 @@ function App() {
           {/* ========================================================
               RUTAS PÚBLICAS: Accesibles por cualquier usuario invitado
               ======================================================== */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/catalog" element={<Catalog />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/artisan/:id" element={<ArtisanProfile />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/terms" element={<Terms />} />
           
           {/* ========================================================
               RUTAS DE CLIENTES: Requieren rol 'client'

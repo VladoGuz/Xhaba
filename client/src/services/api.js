@@ -52,6 +52,11 @@ export const apiFetch = async (endpoint, options = {}) => {
     }
   };
 
+  // Si estamos enviando archivos (FormData), el navegador debe establecer el Content-Type automáticamente (con su boundary)
+  if (options.body instanceof FormData) {
+    delete finalOptions.headers["Content-Type"];
+  }
+
   const response = await fetch(url, finalOptions);
 
   // Manejo centralizado de respuestas HTTP no exitosas (códigos 4xx y 5xx)

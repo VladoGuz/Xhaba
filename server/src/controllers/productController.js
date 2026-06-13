@@ -101,6 +101,13 @@ export const getProductById = asyncHandler(async (req, res) => {
   res.json(result.rows[0]);
 });
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /**
  * Registra y publica una nueva prenda en el catálogo general.
  * 
@@ -111,17 +118,20 @@ export const getProductById = asyncHandler(async (req, res) => {
  */
 export const createProduct = asyncHandler(async (req, res) => {
   const { title, description, technique, material, category, base_price, stock, size_label, image_name } = req.body;
-  const artisanId = req.user.artisan_id; // Recuperado del token decodificado en req.user
+  const artisanId = req.user.artisan_id;
 
   if (!artisanId) {
+    // Limpiar archivo si se subió pero hay un error de validación
+    if (req.file) fs.unlinkSync(req.file.path);
     const err = new Error("No tienes un perfil de artesano registrado para publicar prendas");
-    err.statusCode = 403; // Forbidden
+    err.statusCode = 403;
     throw err;
   }
 
   if (!title || !technique || !material || !category || !base_price || !stock) {
+    if (req.file) fs.unlinkSync(req.file.path);
     const err = new Error("Los campos título, técnica, material, categoría, precio y stock son obligatorios");
-    err.statusCode = 400; // Bad Request
+    err.statusCode = 400;
     throw err;
   }
 
@@ -143,7 +153,7 @@ export const createProduct = asyncHandler(async (req, res) => {
 
   const product = productRes.rows[0];
 
-  // 2. Insertar una variante de stock inicial vinculada al producto recién creado
+  // 2. Insertar una variante de stock inicial
   const variantQuery = `
     INSERT INTO product_variants (product_id, color, size_label, stock)
     VALUES ($1, 'Único/Tradicional', $2, $3)
@@ -154,9 +164,14 @@ export const createProduct = asyncHandler(async (req, res) => {
     parseInt(stock, 10)
   ]);
 
-  // 3. Vincular la foto seleccionada por el artesano en la tabla 'product_images'.
-  // Si no selecciona ninguna, se asigna 'valles1.jpg' como fallback predeterminado.
-  const imgName = image_name ? image_name.trim() : 'valles1.jpg';
+  // 3. Vincular la foto. Si se subió con multer, usar filename; sino usar el enviado por body o fallback.
+  let imgName = 'valles1.jpg';
+  if (req.file) {
+    imgName = req.file.filename;
+  } else if (image_name) {
+    imgName = image_name.trim();
+  }
+
   await pool.query(
     `INSERT INTO product_images (product_id, image_name, is_primary)
      VALUES ($1, $2, TRUE)`,
@@ -167,4 +182,62 @@ export const createProduct = asyncHandler(async (req, res) => {
     message: "Prenda publicada con éxito en el catálogo de Xhaba",
     product
   });
+});
+
+/**
+ * Actualiza la foto de un producto y elimina la anterior.
+ * 
+ * @route   PUT /api/products/:id/image
+ * @desc    Cambia la imagen asociada y borra físicamente el archivo viejo para no generar basura.
+ * @access  Privado (Artesano)
+ */
+export const updateProductImage = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const artisanId = req.user.artisan_id;
+
+  if (!req.file) {
+    const err = new Error("No se ha enviado ninguna imagen");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Verificar si el producto pertenece al artesano
+  const checkRes = await pool.query("SELECT id FROM products WHERE id = $1 AND artisan_id = $2", [id, artisanId]);
+  if (checkRes.rows.length === 0) {
+    fs.unlinkSync(req.file.path);
+    const err = new Error("No tienes permiso para editar esta prenda o no existe");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  // Obtener la imagen actual
+  const imgRes = await pool.query("SELECT image_name FROM product_images WHERE product_id = $1 AND is_primary = TRUE", [id]);
+  
+  if (imgRes.rows.length > 0) {
+    const oldImage = imgRes.rows[0].image_name;
+    // Si la imagen anterior no es una de las precargadas, intentar borrarla del disco
+    if (!['valles1.jpg', 'valles2.jpg', 'valles3.jpg', 'istmo1.jpg', 'istmo2.jpg', 'istmo3.jpg', 'costa1.jpg', 'costa2.jpg', 'costa3.jpg', 'mixteca1.jpg', 'mixteca2.jpg', 'mixteca3.jpg', 'papaloapan1.jpg', 'papaloapan2.jpg', 'papaloapan3.jpg', 'canada1.jpg', 'canada2.jpg', 'canada3.jpg'].includes(oldImage)) {
+      const oldPath = path.join(__dirname, '../../uploads', oldImage);
+      if (fs.existsSync(oldPath)) {
+        try {
+          fs.unlinkSync(oldPath);
+        } catch (e) {
+          console.error("Error al eliminar la imagen anterior:", e);
+        }
+      }
+    }
+    // Actualizar registro en base de datos
+    await pool.query(
+      "UPDATE product_images SET image_name = $1 WHERE product_id = $2 AND is_primary = TRUE",
+      [req.file.filename, id]
+    );
+  } else {
+    // Si no tenía imagen primaria por algún motivo, insertar una
+    await pool.query(
+      "INSERT INTO product_images (product_id, image_name, is_primary) VALUES ($1, $2, TRUE)",
+      [id, req.file.filename]
+    );
+  }
+
+  res.json({ message: "Imagen actualizada correctamente", image_name: req.file.filename });
 });

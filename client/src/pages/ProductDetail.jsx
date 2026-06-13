@@ -5,6 +5,7 @@ import { productService } from '../services/product.service';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { getProductImageUrl } from '../utils/imageHelper';
+import { formatMXN } from '../utils/formatCurrency';
 
 /**
  * Vista de Detalle de Prenda (ProductDetail).
@@ -183,12 +184,12 @@ function ProductDetail() {
                 <img 
                   src={getProductImageUrl(product.images && product.images[0])} 
                   alt={product.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                 />
                 
                 {/* Badges Flotantes Informativos */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
-                  <span className="bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md flex items-center gap-1.5 animate-gradient-x">
+                  <span className="bg-gradient-to-r from-cempasuchil to-cochinilla text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md flex items-center gap-1.5 animate-gradient-x">
                     <Sparkles className="w-3.5 h-3.5 text-yellow-200" />
                     <span>Pieza de Autor</span>
                   </span>
@@ -207,7 +208,7 @@ function ProductDetail() {
               <div>
                 
                 {/* Categoría y Título */}
-                <span className="text-xs uppercase font-bold tracking-widest text-fuchsia-500 mb-2 inline-block">
+                <span className="text-xs uppercase font-bold tracking-widest text-cempasuchil mb-2 inline-block">
                   {product.category}
                 </span>
                 <h1 className="text-3xl md:text-4xl font-serif font-black text-gray-900 mb-4 tracking-tight leading-tight">
@@ -216,23 +217,22 @@ function ProductDetail() {
 
                 {/* Artesano y Comunidad de Origen */}
                 <p className="text-gray-500 font-medium mb-6">
-                  Elaborado por la artesana: <span className="text-rose-600 font-bold">{product.artisan_name}</span> en la comunidad zapoteca de <span className="text-gray-700 font-semibold">{product.artisan_community}</span>.
+                  Elaborado por la artesana: <span className="text-cochinilla font-bold">{product.artisan_name}</span> en la comunidad zapoteca de <span className="text-gray-700 font-semibold">{product.artisan_community}</span>.
                 </p>
 
                 {/* Precio Base */}
                 <div className="pb-6 border-b border-gray-100 mb-6">
-                  <span className="text-4xl font-black text-gray-900">${product.base_price}</span>
-                  <span className="text-sm font-semibold text-gray-400 ml-2">MXN</span>
+                  <span className="text-4xl font-black text-gray-900">{formatMXN(product.base_price)}</span>
                 </div>
 
                 {/* Ficha de Metadatos de la Prenda */}
                 <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="bg-fuchsia-50/50 border border-fuchsia-100 rounded-2xl p-4">
-                    <span className="text-[10px] uppercase font-bold text-fuchsia-500 block mb-1">Técnica Empleada</span>
+                  <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-4">
+                    <span className="text-[10px] uppercase font-bold text-cempasuchil block mb-1">Técnica Empleada</span>
                     <span className="font-bold text-gray-800 text-sm">{product.technique}</span>
                   </div>
                   <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-4">
-                    <span className="text-[10px] uppercase font-bold text-rose-500 block mb-1">Material Base</span>
+                    <span className="text-[10px] uppercase font-bold text-cochinilla block mb-1">Material Base</span>
                     <span className="font-bold text-gray-800 text-sm">{product.material}</span>
                   </div>
                 </div>
@@ -256,7 +256,7 @@ function ProductDetail() {
                                 const availableSize = matchingSizes.find(s => s.stock > 0) || matchingSizes[0];
                                 setSelectedSize(availableSize.size);
                               }}
-                              className={`px-4.5 py-2.5 rounded-xl text-sm font-bold border transition-all ${selectedColor === color ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'}`}
+                              className={`px-4.5 py-2.5 rounded-xl text-sm font-bold border transition-all ${selectedColor === color ? 'bg-cempasuchil border-cempasuchil text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'}`}
                             >
                               {color}
                             </button>
@@ -275,7 +275,7 @@ function ProductDetail() {
                               key={variant.variant_id}
                               disabled={variant.stock === 0} // Deshabilita la opción si el stock en la base de datos es 0
                               onClick={() => setSelectedSize(variant.size)}
-                              className={`px-4.5 py-2.5 rounded-xl text-sm font-bold border transition-all flex flex-col items-center justify-center min-w-[70px] ${variant.stock === 0 ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed line-through' : selectedSize === variant.size ? 'bg-rose-600 border-rose-600 text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'}`}
+                              className={`px-4.5 py-2.5 rounded-xl text-sm font-bold border transition-all flex flex-col items-center justify-center min-w-[70px] ${variant.stock === 0 ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed line-through' : selectedSize === variant.size ? 'bg-cochinilla border-cochinilla text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'}`}
                             >
                               <span>{variant.size}</span>
                               <span className={`text-[9px] mt-0.5 ${variant.stock === 0 ? 'text-gray-300' : selectedSize === variant.size ? 'text-rose-100' : 'text-gray-400'}`}>
@@ -317,7 +317,7 @@ function ProductDetail() {
                 <button
                   onClick={handleAddToCartClick}
                   disabled={isOutOfStock || isCurrentVariantOutOfStock}
-                  className="flex-grow flex items-center justify-center gap-2.5 bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white font-extrabold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all"
+                  className="flex-grow flex items-center justify-center gap-2.5 bg-gradient-to-r from-cempasuchil to-cochinilla text-white font-extrabold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all"
                 >
                   <ShoppingBag className="w-5 h-5" />
                   <span>

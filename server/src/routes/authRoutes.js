@@ -1,7 +1,8 @@
 import express from "express";
-import { register, login, logout, getMe } from "../controllers/authController.js";
+import { register, login, logout, getMe, uploadAvatar, deleteAvatar } from "../controllers/authController.js";
 import { authenticateToken } from "../middlewares/authMiddleware.js";
 import { validateRegister, validateLogin } from "../validators/authValidator.js";
+import { upload } from "../middlewares/upload.js";
 
 const router = express.Router();
 
@@ -36,5 +37,19 @@ router.post("/logout", logout);
  * @handler authenticateToken (verificación de firma JWT) -> getMe (lectura de datos)
  */
 router.get("/me", authenticateToken, getMe);
+
+/**
+ * @route   PUT /api/auth/avatar
+ * @desc    Sube o actualiza la foto de perfil del usuario
+ * @access  Privado
+ */
+router.put("/avatar", authenticateToken, upload.single('image'), uploadAvatar);
+
+/**
+ * @route   DELETE /api/auth/avatar
+ * @desc    Elimina la foto de perfil del usuario
+ * @access  Privado
+ */
+router.delete("/avatar", authenticateToken, deleteAvatar);
 
 export default router;

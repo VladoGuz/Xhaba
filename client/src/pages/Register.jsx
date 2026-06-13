@@ -118,19 +118,37 @@ function Register() {
           </div>
         )}
 
+        {/* Pestañas de Selección de Rol */}
+        <div className="flex bg-gray-100 p-1 rounded-xl mb-8">
+          <button
+            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${formData.role === 'client' ? 'bg-white text-cempasuchil shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setFormData({...formData, role: 'client'})}
+          >
+            Soy Cliente
+          </button>
+          <button
+            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${formData.role === 'artisan' ? 'bg-white text-cochinilla shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setFormData({...formData, role: 'artisan'})}
+          >
+            Soy Artesano
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar / Foto de Perfil maqueta */}
-          <div className="flex justify-center">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
-                <Camera className="w-8 h-8 text-gray-400" />
+          {/* Avatar / Foto de Perfil (Más relevante para Artesano) */}
+          {formData.role === 'artisan' && (
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
+                  <Camera className="w-8 h-8 text-gray-400" />
+                </div>
+                <label className="absolute bottom-0 right-0 bg-cochinilla text-white p-1.5 rounded-full cursor-pointer hover:bg-cochinilla-dark transition-colors">
+                  <input type="file" className="hidden" accept="image/*" />
+                  <Camera className="w-4 h-4" />
+                </label>
               </div>
-              <label className="absolute bottom-0 right-0 bg-barro text-white p-1.5 rounded-full cursor-pointer hover:bg-[#1a1a1a] transition-colors">
-                <input type="file" className="hidden" accept="image/*" />
-                <Camera className="w-4 h-4" />
-              </label>
             </div>
-          </div>
+          )}
 
           <div className="space-y-4">
             {/* Campo: Nombre Completo */}
@@ -141,24 +159,9 @@ function Register() {
                 name="name"
                 required
                 value={formData.name}
-                placeholder="Nombre Completo" 
+                placeholder={formData.role === 'artisan' ? "Nombre Completo o Taller" : "Nombre Completo"} 
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none transition-all"
-              />
-            </div>
-
-            {/* Campo: Edad */}
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input 
-                type="number" 
-                name="age"
-                required
-                min="18"
-                value={formData.age}
-                placeholder="Edad" 
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none transition-all"
+                className={`w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${formData.role === 'artisan' ? 'focus:ring-cochinilla' : 'focus:ring-cempasuchil'}`}
               />
             </div>
 
@@ -172,7 +175,7 @@ function Register() {
                 value={formData.email}
                 placeholder="Correo Electrónico" 
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none transition-all"
+                className={`w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${formData.role === 'artisan' ? 'focus:ring-cochinilla' : 'focus:ring-cempasuchil'}`}
               />
             </div>
 
@@ -186,56 +189,62 @@ function Register() {
                 value={formData.password}
                 placeholder="Contraseña" 
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none transition-all"
+                className={`w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${formData.role === 'artisan' ? 'focus:ring-cochinilla' : 'focus:ring-cempasuchil'}`}
               />
             </div>
 
-            {/* Campo: Rol de Cuenta (Cliente vs Artesano) */}
-            <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <select 
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none bg-white text-gray-700 transition-all cursor-pointer"
-              >
-                <option value="client">Registrarse como Cliente / Comprador</option>
-                <option value="artisan">Registrarse como Artesano / Vendedor</option>
-              </select>
-            </div>
+            {/* Campos Específicos para Artesanos */}
+            {formData.role === 'artisan' && (
+              <>
+                {/* Campo: Edad */}
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input 
+                    type="number" 
+                    name="age"
+                    required
+                    min="18"
+                    value={formData.age}
+                    placeholder="Edad" 
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cochinilla focus:border-transparent outline-none transition-all"
+                  />
+                </div>
 
-            {/* Seccional de Dirección o procedencia regional de Oaxaca */}
-            <div className="pt-2">
-              <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-grana" /> Dirección (Valles Centrales)
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <input 
-                  type="text" 
-                  name="municipio"
-                  required
-                  value={formData.municipio}
-                  placeholder="Municipio" 
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none transition-all"
-                />
-                <input 
-                  type="text" 
-                  name="barrio"
-                  required
-                  value={formData.barrio}
-                  placeholder="Barrio/Sección" 
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none transition-all"
-                />
-              </div>
-            </div>
+                {/* Seccional de Dirección o procedencia regional de Oaxaca */}
+                <div className="pt-2">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-cochinilla" /> Dirección del Taller
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input 
+                      type="text" 
+                      name="municipio"
+                      required
+                      value={formData.municipio}
+                      placeholder="Municipio" 
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cochinilla focus:border-transparent outline-none transition-all"
+                    />
+                    <input 
+                      type="text" 
+                      name="barrio"
+                      required
+                      value={formData.barrio}
+                      placeholder="Barrio/Sección" 
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cochinilla focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <button 
             type="submit"
             disabled={loading}
-            className="w-full bg-grana text-white py-3 rounded-lg font-medium hover:bg-grana-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className={`w-full text-white py-3 rounded-lg font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${formData.role === 'artisan' ? 'bg-cochinilla hover:bg-cochinilla-dark' : 'bg-cempasuchil hover:bg-orange-600'}`}
           >
             {loading ? (
               <>
@@ -243,7 +252,7 @@ function Register() {
                 Procesando...
               </>
             ) : (
-              "Registrarse"
+              formData.role === 'artisan' ? "Registrarme como Artesano" : "Registrarme como Cliente"
             )}
           </button>
         </form>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 /**
  * Componente Footer (Pie de Página).
@@ -48,10 +49,9 @@ const Footer = () => {
               Comunidad Xhaba
             </h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-grana transition-colors">Nuestros Artesanos</a></li>
-              <li><a href="#" className="hover:text-grana transition-colors">Procesos del Telar</a></li>
-              <li><a href="#" className="hover:text-grana transition-colors">Garantía de Autenticidad</a></li>
-              <li><a href="#" className="hover:text-grana transition-colors">Proyectos Sociales</a></li>
+              <li><Link to="/about" className="hover:text-grana transition-colors">Sobre Nosotros</Link></li>
+              <li><Link to="/catalog" className="hover:text-grana transition-colors">Nuestros Artesanos</Link></li>
+              <li><Link to="/catalog" className="hover:text-grana transition-colors">Garantía de Autenticidad</Link></li>
             </ul>
           </div>
 
@@ -71,8 +71,8 @@ const Footer = () => {
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
           <p>&copy; 2026 Xhaba E-commerce. Orgullosamente hecho en Oaxaca.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="hover:text-gray-400 transition-colors">Términos de Servicio</a>
-            <a href="#" className="hover:text-gray-400 transition-colors">Política de Privacidad</a>
+            <Link to="/terms" className="hover:text-gray-400 transition-colors">Términos y Condiciones</Link>
+            <Link to="/terms" className="hover:text-gray-400 transition-colors">Política de Privacidad</Link>
           </div>
         </div>
 

@@ -8,8 +8,8 @@ export default {
     extend: {
       colors: {
         // Paleta Semántica: Rústica y Artesanal Oaxaqueña
-        hueso: '#FAF7F2',          // Hueso / manta natural base
-        manta: '#FAF7F2',          // Alias para bg-manta
+        hueso: '#F5F2EB',          // Hueso gentrificado / autóctono
+        manta: '#F5F2EB',          // Alias para bg-manta
         
         barro: {
           DEFAULT: '#232323',      // Barro negro de San Bartolo Coyotepec

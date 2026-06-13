@@ -17,7 +17,9 @@ import { productService } from '../services/product.service';
  */
 function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const searchParamQuery = searchParams.get('search') || ''; // Recupera el filtro '?search=xyz' de la URL si existe
+  const searchParamQuery = searchParams.get('search') || ''; 
+  const categoryParamQuery = searchParams.get('category') || '';
+  const regionParamQuery = searchParams.get('region') || '';
 
   // Estados de datos obtenidos del servidor
   const [products, setProducts] = useState([]);
@@ -26,16 +28,19 @@ function Catalog() {
 
   // Estados locales para los filtros seleccionados
   const [searchQuery, setSearchQuery] = useState(searchParamQuery);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(categoryParamQuery);
+  const [selectedRegion, setSelectedRegion] = useState(regionParamQuery);
   const [selectedTechnique, setSelectedTechnique] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('title-asc'); // Criterio de orden por defecto: Nombre (A-Z)
 
-  // Efecto: Sincroniza la caja de texto del buscador cuando cambia el Query Parameter en la barra de direcciones
+  // Efecto: Sincroniza los filtros cuando cambia el Query Parameter en la barra de direcciones
   useEffect(() => {
     setSearchQuery(searchParamQuery);
-  }, [searchParamQuery]);
+    setSelectedCategory(categoryParamQuery);
+    setSelectedRegion(regionParamQuery);
+  }, [searchParamQuery, categoryParamQuery, regionParamQuery]);
 
   // Carga inicial del catálogo completo
   useEffect(() => {
@@ -59,17 +64,26 @@ function Catalog() {
   const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
   const techniques = [...new Set(products.map(p => p.technique))].filter(Boolean);
 
-  /**
-   * Resetea todos los estados de filtrado al estado inicial.
-   */
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedCategory('');
+    setSelectedRegion('');
     setSelectedTechnique('');
     setMinPrice('');
     setMaxPrice('');
     setSortBy('title-asc');
     setSearchParams({}); // Limpia los parámetros de búsqueda de la URL
+  };
+
+  const getRegionFromCommunity = (community) => {
+    const c = community.toLowerCase();
+    if (c.includes('teotitlán') || c.includes('antonino') || c.includes('bartolo') || c.includes('mitla') || c.includes('ocotlán') || c.includes('oaxaca')) return 'Valles Centrales';
+    if (c.includes('juchitán') || c.includes('tehuantepec') || c.includes('mateo')) return 'Istmo';
+    if (c.includes('pinotepa') || c.includes('jamiltepec') || c.includes('huatulco')) return 'Costa';
+    if (c.includes('tlaxiaco') || c.includes('huajuapan') || c.includes('putla')) return 'Mixteca';
+    if (c.includes('tuxtepec') || c.includes('jalapa') || c.includes('valle nacional')) return 'Papaloapan';
+    if (c.includes('huautla') || c.includes('magón')) return 'Cañada';
+    return 'Otra';
   };
 
   // Lógica de Filtrado: Computa en caliente (en cada render) el arreglo de prendas filtradas
@@ -94,7 +108,11 @@ function Catalog() {
     // 5. Coincidencia por Rango Máximo de Precio
     const matchesMaxPrice = !maxPrice || priceNum <= parseFloat(maxPrice);
 
-    return matchesSearch && matchesCategory && matchesTechnique && matchesMinPrice && matchesMaxPrice;
+    // 6. Coincidencia por Región
+    const region = getRegionFromCommunity(product.artisan_community);
+    const matchesRegion = !selectedRegion || region === selectedRegion;
+
+    return matchesSearch && matchesCategory && matchesTechnique && matchesMinPrice && matchesMaxPrice && matchesRegion;
   });
 
   // Lógica de Ordenación: Aplica sort() sobre el arreglo previamente filtrado
@@ -129,11 +147,31 @@ function Catalog() {
                 Explora lienzos vivos confeccionados a mano. Cada prenda es única y refleja la cosmovisión e identidad de los pueblos originarios.
               </p>
             </div>
-            {/* Contador totalizador de catálogo */}
-            <div className="hidden lg:block bg-white/15 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-inner max-w-xs text-center">
-              <span className="text-3xl font-black">{products.length}</span>
-              <p className="text-xs uppercase font-semibold tracking-wider text-pink-200 mt-1">Obras Registradas en Catálogo</p>
-            </div>
+          </div>
+        </section>
+
+        {/* Categorías Visuales */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-serif font-black text-gray-900 mb-6 flex items-center gap-2">
+            <Tag className="w-6 h-6 text-fuchsia-500" /> Explorar por Colección
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { id: 'huipiles', name: 'Huipiles', img: '/images/huipil.png' },
+              { id: 'blusas', name: 'Blusas', img: '/images/blusa.png' },
+              { id: 'guayaberas', name: 'Guayaberas', img: '/images/guayabera.png' },
+              { id: 'manteleria', name: 'Mantelería', img: '/images/manteleria.png' }
+            ].map(cat => (
+              <div 
+                key={cat.name}
+                onClick={() => { setSelectedCategory(cat.name); setSearchParams({ category: cat.name }); }}
+                className="relative h-32 md:h-40 rounded-2xl overflow-hidden cursor-pointer group shadow-sm hover:shadow-md transition-shadow"
+              >
+                <img src={cat.img} alt={cat.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                <h3 className="absolute bottom-4 left-4 text-white font-bold text-lg">{cat.name}</h3>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -176,7 +214,7 @@ function Catalog() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Categoría</label>
               <div className="flex flex-col gap-2">
                 <button 
-                  onClick={() => setSelectedCategory('')}
+                  onClick={() => { setSelectedCategory(''); setSearchParams(prev => { prev.delete('category'); return prev; }); }}
                   className={`text-left text-sm py-2 px-3 rounded-lg font-medium transition-all ${!selectedCategory ? 'bg-fuchsia-50 text-fuchsia-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
                   Todas las prendas
@@ -184,7 +222,7 @@ function Catalog() {
                 {categories.map(category => (
                   <button 
                     key={category}
-                    onClick={() => setSelectedCategory(category)}
+                    onClick={() => { setSelectedCategory(category); setSearchParams(prev => { prev.set('category', category); return prev; }); }}
                     className={`text-left text-sm py-2 px-3 rounded-lg font-medium transition-all ${selectedCategory === category ? 'bg-fuchsia-50 text-fuchsia-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
                   >
                     {category}
@@ -192,6 +230,8 @@ function Catalog() {
                 ))}
               </div>
             </div>
+
+
 
             {/* Selector de Técnicas (Dropdown) */}
             <div className="mb-6">
@@ -276,12 +316,7 @@ function Catalog() {
 
             {!loading && !error && (
               <>
-                {/* Contador de resultados actuales */}
-                <div className="flex justify-between items-center mb-6">
-                  <p className="text-gray-600 font-medium">
-                    Mostrando <span className="font-bold text-gray-900">{sortedProducts.length}</span> textiles artesanales
-                  </p>
-                </div>
+
 
                 {sortedProducts.length === 0 ? (
                   /* Vista vacía (No results fallback) */
@@ -302,22 +337,39 @@ function Catalog() {
                     </button>
                   </div>
                 ) : (
-                  /* Grid de Cards */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {sortedProducts.map((product) => {
-                      // Determina si es una pieza única (stock: 1)
-                      const isUnique = product.variants && product.variants.some(v => v.stock === 1);
+                  /* Grid de Cards Agrupadas por Región */
+                  <div className="space-y-16">
+                    {['Valles Centrales', 'Istmo', 'Costa', 'Mixteca', 'Papaloapan', 'Cañada', 'Otra'].map(regionGroup => {
+                      const regionProducts = sortedProducts.filter(p => getRegionFromCommunity(p.artisan_community) === regionGroup);
+                      
+                      if (regionProducts.length === 0) return null;
+
                       return (
-                        <ProductCard 
-                          key={product.product_id || product.id}
-                          id={product.product_id || product.id}
-                          title={product.title}
-                          price={product.base_price}
-                          artisan={`${product.artisan_name} (${product.artisan_community})`}
-                          // Fallback de imagen primaria si no existe
-                          image={product.images && product.images[0] ? product.images[0] : 'valles1.jpg'}
-                          isUnique={isUnique}
-                        />
+                        <div key={regionGroup}>
+                          <div className="flex items-center gap-4 mb-6">
+                            <h2 className="text-3xl font-serif font-black text-gray-900">{regionGroup}</h2>
+                            <div className="h-px bg-gray-200 flex-grow mt-2"></div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {regionProducts.map((product) => {
+                              // Determina si es una pieza única (stock: 1)
+                              const isUnique = product.variants && product.variants.some(v => v.stock === 1);
+                              return (
+                                <ProductCard 
+                                  key={product.product_id || product.id}
+                                  id={product.product_id || product.id}
+                                  title={product.title}
+                                  price={product.base_price}
+                                  artisan={`${product.artisan_name} (${product.artisan_community})`}
+                                  // Fallback de imagen primaria si no existe
+                                  image={product.images && product.images[0] ? product.images[0] : 'valles1.jpg'}
+                                  isUnique={isUnique}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>

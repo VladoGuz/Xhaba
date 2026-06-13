@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { getProductImageUrl } from '../utils/imageHelper';
+import { formatMXN } from '../utils/formatCurrency';
 
 /**
  * Vista de la Bolsa de Compras (Cart) - Historia de Usuario HU-03.
@@ -55,7 +56,7 @@ function Cart() {
                     <div>
                       <h3 className="font-medium text-lg text-gray-900">{item.title}</h3>
                       <p className="text-gray-500">Cantidad: {item.quantity}</p>
-                      <p className="text-barro font-semibold">${item.price}</p>
+                      <p className="text-barro font-semibold">{formatMXN(item.price)}</p>
                     </div>
                   </div>
                   {/* Eliminar ítem del carrito */}
@@ -72,7 +73,7 @@ function Cart() {
             {/* Pie de bolsa: Total económico y Checkout CTA */}
             <div className="bg-gray-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-xl font-medium text-gray-900">
-                Total: <span className="font-bold text-barro">${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                Total: <span className="font-bold text-barro">{formatMXN(total)}</span>
               </div>
               <button 
                 onClick={() => navigate('/checkout')}

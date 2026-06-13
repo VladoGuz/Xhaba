@@ -92,8 +92,19 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const refreshSession = async () => {
+    try {
+      const data = await apiFetch("/api/auth/me");
+      if (data && data.user) {
+        setUser(data.user);
+      }
+    } catch (err) {
+      console.error("Error al refrescar sesión:", err.message);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );
