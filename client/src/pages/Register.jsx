@@ -4,15 +4,21 @@ import { Camera, Mail, Lock, User, MapPin, Calendar, Briefcase, AlertCircle, Che
 import { useAuth } from '../context/AuthContext';
 
 /**
- * Componente Register (Historia de Usuario HU-01)
- * Permite a los compradores y artesanos registrarse en la plataforma ingresando:
- * Nombre, edad, correo, contraseña, dirección (específica de Valles Centrales) y rol.
+ * Vista de Registro de Cuenta (Register) - Historia de Usuario HU-01.
+ * 
+ * Permite a nuevos usuarios registrarse en la plataforma Xhaba.
+ * Soporta dos perfiles mediante el campo de rol:
+ * - 'client' (Compradores y coleccionistas textiles).
+ * - 'artisan' (Maestros tejedores y costureros oaxaqueños).
+ * 
+ * Recolecta geolocalización regional (municipio y barrio/sección de Oaxaca)
+ * y realiza validaciones en caliente (edad mínima de 18 años, contraseñas seguras).
  */
 function Register() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register } = useAuth(); // Consume la función de registro provista por AuthContext
   
-  // Estado local para guardar los datos del formulario
+  // Estado local que agrupa todos los campos del formulario
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -20,19 +26,23 @@ function Register() {
     password: '',
     municipio: '',
     barrio: '',
-    role: 'client'
+    role: 'client' // Rol por defecto: Cliente
   });
 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Feedback visual en el botón durante la petición
 
+  /**
+   * Procesa el envío del formulario. Realiza validaciones del lado del cliente antes
+   * de disparar la petición HTTP al servidor para ahorrar recursos de red.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
 
-    // Validaciones del lado del cliente (Client-side validation guards)
+    // 1. Guardias de validación básica del lado del cliente
     if (!formData.name.trim()) {
       setError("El nombre es obligatorio");
       return;
@@ -51,6 +61,7 @@ function Register() {
     setLoading(true);
 
     try {
+      // Petición de registro al servidor Express
       await register({
         name: formData.name,
         email: formData.email,
@@ -62,7 +73,9 @@ function Register() {
       });
       
       setSuccess(true);
-      // Redirigir a login después de 2 segundos
+      
+      // Temporizador pedagógico: Espera 2 segundos mostrando un mensaje verde de éxito
+      // y luego redirige a la pantalla de Login.
       setTimeout(() => {
         navigate('/login');
       }, 2000);
@@ -74,6 +87,9 @@ function Register() {
     }
   };
 
+  /**
+   * Manejador de cambio genérico para actualizar el estado del formulario de forma limpia
+   */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -86,6 +102,7 @@ function Register() {
           <p className="text-gray-600 mt-2">Únete a nuestra comunidad de arte textil</p>
         </div>
 
+        {/* Alerta de error */}
         {error && (
           <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md flex items-start gap-3 shadow-sm">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -93,6 +110,7 @@ function Register() {
           </div>
         )}
 
+        {/* Alerta de éxito */}
         {success && (
           <div className="mb-6 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-md flex items-start gap-3 shadow-sm">
             <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -101,7 +119,7 @@ function Register() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Foto de Perfil (Visual) */}
+          {/* Avatar / Foto de Perfil maqueta */}
           <div className="flex justify-center">
             <div className="relative">
               <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
@@ -115,6 +133,7 @@ function Register() {
           </div>
 
           <div className="space-y-4">
+            {/* Campo: Nombre Completo */}
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input 
@@ -128,6 +147,7 @@ function Register() {
               />
             </div>
 
+            {/* Campo: Edad */}
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input 
@@ -142,6 +162,7 @@ function Register() {
               />
             </div>
 
+            {/* Campo: Correo Electrónico */}
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input 
@@ -155,6 +176,7 @@ function Register() {
               />
             </div>
 
+            {/* Campo: Contraseña */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input 
@@ -168,6 +190,7 @@ function Register() {
               />
             </div>
 
+            {/* Campo: Rol de Cuenta (Cliente vs Artesano) */}
             <div className="relative">
               <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <select 
@@ -181,6 +204,7 @@ function Register() {
               </select>
             </div>
 
+            {/* Seccional de Dirección o procedencia regional de Oaxaca */}
             <div className="pt-2">
               <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-grana" /> Dirección (Valles Centrales)

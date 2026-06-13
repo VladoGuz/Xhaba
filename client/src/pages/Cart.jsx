@@ -5,10 +5,15 @@ import { useCart } from '../context/CartContext';
 import { getProductImageUrl } from '../utils/imageHelper';
 
 /**
- * Componente Cart (Historia de Usuario HU-03)
- * Muestra los artículos seleccionados por el cliente.
- * Se apoya en CartContext para preservar los datos incluso si el usuario
- * cierra la pestaña, simulando la persistencia en base de datos.
+ * Vista de la Bolsa de Compras (Cart) - Historia de Usuario HU-03.
+ * 
+ * Muestra el resumen detallado de los artículos que el cliente ha acumulado en su carrito.
+ * Utiliza el `useCart` Hook para:
+ * - Leer los artículos del carrito (`cartItems`).
+ * - Calcular en caliente el precio total (`total`).
+ * - Eliminar elementos (`removeFromCart`).
+ * 
+ * Resuelve las fotos de los productos de forma dinámica llamando a `getProductImageUrl`.
  */
 function Cart() {
   const { cartItems, removeFromCart, total } = useCart();
@@ -17,12 +22,14 @@ function Cart() {
   return (
     <div className="min-h-screen bg-manta py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
+        {/* Cabecera decorativa */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <ShoppingBag className="w-8 h-8 text-barro" />
           <h2 className="text-3xl font-serif font-bold text-barro">Tu Bolsa de Compras</h2>
         </div>
 
         {cartItems.length === 0 ? (
+          /* Estado Vacío: Invita a explorar el catálogo */
           <div className="bg-white p-12 text-center rounded-xl shadow-sm border border-gray-100">
             <p className="text-gray-500 text-lg">Aún no tienes prendas en tu bolsa.</p>
             <button 
@@ -33,11 +40,13 @@ function Cart() {
             </button>
           </div>
         ) : (
+          /* Listado de Artículos del Carrito */
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <ul className="divide-y divide-gray-100">
               {cartItems.map((item) => (
                 <li key={item.id} className="p-6 flex items-center justify-between">
                   <div className="flex items-center gap-4">
+                    {/* Renderiza la imagen dinámica empaquetada */}
                     <img 
                       src={getProductImageUrl(item.image)} 
                       alt={item.title} 
@@ -49,6 +58,7 @@ function Cart() {
                       <p className="text-barro font-semibold">${item.price}</p>
                     </div>
                   </div>
+                  {/* Eliminar ítem del carrito */}
                   <button 
                     onClick={() => removeFromCart(item.id)}
                     className="p-2 text-gray-400 hover:text-red-500 transition-colors"
@@ -59,6 +69,7 @@ function Cart() {
                 </li>
               ))}
             </ul>
+            {/* Pie de bolsa: Total económico y Checkout CTA */}
             <div className="bg-gray-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-xl font-medium text-gray-900">
                 Total: <span className="font-bold text-barro">${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>

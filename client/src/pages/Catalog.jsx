@@ -4,29 +4,40 @@ import { SlidersHorizontal, Search, RotateCcw, Tag, Sparkles } from 'lucide-reac
 import ProductCard from '../components/ProductCard';
 import { productService } from '../services/product.service';
 
+/**
+ * Vista del Catálogo General de Textiles (Catalog).
+ * 
+ * Permite buscar, filtrar y ordenar de manera reactiva la lista completa de prendas de Xhaba:
+ * - Filtro de texto por coincidencia en título, descripción o nombre de artesano.
+ * - Filtros por categoría y técnicas artesanales extraídas de forma dinámica de los datos del backend.
+ * - Filtro numérico por rango de precios.
+ * - Ordenación alfabética y por valor monetario.
+ * 
+ * Implementa sincronización de filtros con los Query Parameters de la URL (useSearchParams).
+ */
 function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const searchParamQuery = searchParams.get('search') || '';
+  const searchParamQuery = searchParams.get('search') || ''; // Recupera el filtro '?search=xyz' de la URL si existe
 
-  // Estados de datos
+  // Estados de datos obtenidos del servidor
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados de filtros
+  // Estados locales para los filtros seleccionados
   const [searchQuery, setSearchQuery] = useState(searchParamQuery);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedTechnique, setSelectedTechnique] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
-  const [sortBy, setSortBy] = useState('title-asc');
+  const [sortBy, setSortBy] = useState('title-asc'); // Criterio de orden por defecto: Nombre (A-Z)
 
-  // Sincronizar el input con la URL de búsqueda
+  // Efecto: Sincroniza la caja de texto del buscador cuando cambia el Query Parameter en la barra de direcciones
   useEffect(() => {
     setSearchQuery(searchParamQuery);
   }, [searchParamQuery]);
 
-  // Cargar productos
+  // Carga inicial del catálogo completo
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -43,11 +54,14 @@ function Catalog() {
     fetchProducts();
   }, []);
 
-  // Extraer valores únicos dinámicos para filtros
+  // Extracción dinámica de categorías y técnicas únicas utilizando 'Set' de JavaScript
+  // Evita declarar categorías de forma dura y se adapta automáticamente a lo registrado en la DB
   const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
   const techniques = [...new Set(products.map(p => p.technique))].filter(Boolean);
 
-  // Limpiar filtros
+  /**
+   * Resetea todos los estados de filtrado al estado inicial.
+   */
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedCategory('');
@@ -55,35 +69,35 @@ function Catalog() {
     setMinPrice('');
     setMaxPrice('');
     setSortBy('title-asc');
-    setSearchParams({});
+    setSearchParams({}); // Limpia los parámetros de búsqueda de la URL
   };
 
-  // Filtrar productos
+  // Lógica de Filtrado: Computa en caliente (en cada render) el arreglo de prendas filtradas
   const filteredProducts = products.filter(product => {
-    // Filtro por texto (título, descripción o artesano)
+    // 1. Coincidencia por texto
     const matchesSearch = 
       !searchQuery || 
       product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
       product.artisan_name.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Filtro por Categoría
+    // 2. Coincidencia por Categoría
     const matchesCategory = !selectedCategory || product.category === selectedCategory;
 
-    // Filtro por Técnica
+    // 3. Coincidencia por Técnica Artesanal
     const matchesTechnique = !selectedTechnique || product.technique === selectedTechnique;
 
-    // Filtro por Precio Mínimo
+    // 4. Coincidencia por Rango Mínimo de Precio
     const priceNum = parseFloat(product.base_price);
     const matchesMinPrice = !minPrice || priceNum >= parseFloat(minPrice);
 
-    // Filtro por Precio Máximo
+    // 5. Coincidencia por Rango Máximo de Precio
     const matchesMaxPrice = !maxPrice || priceNum <= parseFloat(maxPrice);
 
     return matchesSearch && matchesCategory && matchesTechnique && matchesMinPrice && matchesMaxPrice;
   });
 
-  // Ordenar productos
+  // Lógica de Ordenación: Aplica sort() sobre el arreglo previamente filtrado
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     const priceA = parseFloat(a.base_price);
     const priceB = parseFloat(b.base_price);
@@ -99,7 +113,7 @@ function Catalog() {
     <main className="min-h-screen bg-manta py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* Banner de Categoría y Bienvenida */}
+        {/* Banner Ilustrativo y Estadísticas */}
         <section className="bg-gradient-to-r from-fuchsia-600 via-pink-500 to-rose-500 rounded-3xl p-8 md:p-12 shadow-lg mb-12 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-2xl -translate-y-12 translate-x-12 animate-pulse"></div>
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -115,6 +129,7 @@ function Catalog() {
                 Explora lienzos vivos confeccionados a mano. Cada prenda es única y refleja la cosmovisión e identidad de los pueblos originarios.
               </p>
             </div>
+            {/* Contador totalizador de catálogo */}
             <div className="hidden lg:block bg-white/15 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-inner max-w-xs text-center">
               <span className="text-3xl font-black">{products.length}</span>
               <p className="text-xs uppercase font-semibold tracking-wider text-pink-200 mt-1">Obras Registradas en Catálogo</p>
@@ -141,7 +156,7 @@ function Catalog() {
               </button>
             </div>
 
-            {/* Búsqueda por Texto */}
+            {/* Buscador de texto libre */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-gray-700 mb-2">Búsqueda directa</label>
               <div className="relative">
@@ -156,7 +171,7 @@ function Catalog() {
               </div>
             </div>
 
-            {/* Categorías */}
+            {/* Selector de Categorías (Botones interactivos con estilo de pestaña) */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-gray-700 mb-2">Categoría</label>
               <div className="flex flex-col gap-2">
@@ -178,7 +193,7 @@ function Catalog() {
               </div>
             </div>
 
-            {/* Técnicas */}
+            {/* Selector de Técnicas (Dropdown) */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-gray-700 mb-2">Técnica Artesanal</label>
               <select 
@@ -215,7 +230,7 @@ function Catalog() {
               </div>
             </div>
 
-            {/* Criterio de Ordenación */}
+            {/* Orden de clasificación */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Ordenar Por</label>
               <select 
@@ -231,9 +246,10 @@ function Catalog() {
             </div>
           </aside>
 
-          {/* CUADRICULA DE PRODUCTOS */}
+          {/* CUADRÍCULA DE PRODUCTOS RESULTANTES */}
           <section className="flex-grow">
             {loading && (
+              /* Skeletons animados durante la consulta a la base de datos */
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="bg-white rounded-2xl h-96 animate-pulse border border-gray-100 flex flex-col justify-between p-6">
@@ -260,7 +276,7 @@ function Catalog() {
 
             {!loading && !error && (
               <>
-                {/* Contador de resultados */}
+                {/* Contador de resultados actuales */}
                 <div className="flex justify-between items-center mb-6">
                   <p className="text-gray-600 font-medium">
                     Mostrando <span className="font-bold text-gray-900">{sortedProducts.length}</span> textiles artesanales
@@ -268,6 +284,7 @@ function Catalog() {
                 </div>
 
                 {sortedProducts.length === 0 ? (
+                  /* Vista vacía (No results fallback) */
                   <div className="bg-white rounded-3xl p-16 text-center border border-pink-100/50 shadow-sm flex flex-col items-center max-w-2xl mx-auto">
                     <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mb-6">
                       <Tag className="w-10 h-10" />
@@ -285,8 +302,10 @@ function Catalog() {
                     </button>
                   </div>
                 ) : (
+                  /* Grid de Cards */
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     {sortedProducts.map((product) => {
+                      // Determina si es una pieza única (stock: 1)
                       const isUnique = product.variants && product.variants.some(v => v.stock === 1);
                       return (
                         <ProductCard 
@@ -295,6 +314,7 @@ function Catalog() {
                           title={product.title}
                           price={product.base_price}
                           artisan={`${product.artisan_name} (${product.artisan_community})`}
+                          // Fallback de imagen primaria si no existe
                           image={product.images && product.images[0] ? product.images[0] : 'valles1.jpg'}
                           isUnique={isUnique}
                         />

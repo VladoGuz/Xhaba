@@ -3,6 +3,19 @@ import { Star, Loader, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 
+/**
+ * Componente ReviewForm (Formulario de Reseñas).
+ * 
+ * Cumple con la Historia de Usuario HU-04 (Reputación y Reseñas).
+ * Permite a los compradores registrados enviar una valoración (estrellas y comentario)
+ * sobre el trabajo de un artesano específico.
+ * 
+ * Detalles técnicos clave:
+ * 1. Filtra visibilidad del formulario: Sólo accesible si hay sesión iniciada con el rol `client`.
+ * 2. Interactividad con estrellas: Maneja eventos hover (`onMouseEnter`, `onMouseLeave`) y click
+ *    para una experiencia visual responsiva de calificación de 1 a 5 estrellas.
+ * 3. Envío POST al endpoint transaccional `/api/artisans/:id/reviews`.
+ */
 function ReviewForm({ artisanId }) {
   const { user } = useAuth();
   const [rating, setRating] = useState(0);

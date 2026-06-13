@@ -2,9 +2,14 @@ import pool from "../config/db.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 /**
- * Procesa la compra de los artículos en el carrito transaccionalmente.
- * Utiliza SELECT ... FOR UPDATE para evitar colisiones de stock y asegurar concurrencia real (HU-02).
- * POST /api/orders/checkout
+ * Procesa la compra de los artículos en el carrito de compras de forma transaccional.
+ * 
+ * @route   POST /api/orders/checkout
+ * @desc    Ejecuta una transacción SQL (BEGIN/COMMIT/ROLLBACK) de base de datos.
+ *          Implementa un bloqueo pesimista en PostgreSQL (SELECT ... FOR UPDATE) sobre las variantes solicitadas
+ *          para evitar condiciones de carrera (race conditions) cuando múltiples compradores adquieren prendas
+ *          de edición limitada o piezas únicas de forma simultánea.
+ * @access  Privado (Cliente)
  */
 export const createCheckoutOrder = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -12,21 +17,25 @@ export const createCheckoutOrder = asyncHandler(async (req, res) => {
 
   if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
     const err = new Error("El carrito de compras no contiene artículos");
-    err.statusCode = 400;
+    err.statusCode = 400; // Bad Request
     throw err;
   }
 
+  // Se solicita un cliente dedicado del Pool de conexiones. Las transacciones (BEGIN/COMMIT)
+  // deben ejecutarse sobre el mismo cliente físico, no directamente llamando a pool.query().
   const client = await pool.connect();
 
   try {
-    // 1. Iniciar transacción SQL
+    // 1. Iniciar la transacción SQL
     await client.query("BEGIN");
 
     let totalAmount = 0;
     const itemsToProcess = [];
 
-    // 2. Bloquear y verificar el stock de cada variante solicitada concurrentemente
+    // 2. Bloquear y verificar el stock de cada variante solicitada
     for (const item of cartItems) {
+      // 'FOR UPDATE' le dice a PostgreSQL: Bloquea esta fila. Ninguna otra conexión podrá leer
+      // o modificar esta fila usando 'FOR UPDATE' o sentencias de escritura hasta que la transacción actual termine.
       const variantQuery = `
         SELECT pv.id, pv.stock, p.base_price, p.title 
         FROM product_variants pv 
@@ -42,10 +51,11 @@ export const createCheckoutOrder = asyncHandler(async (req, res) => {
 
       const variant = variantRes.rows[0];
 
-      // Validar stock disponible
+      // Validar si hay suficiente stock disponible físico en la base de datos
       if (variant.stock < item.quantity) {
+        // Arroja error 409 Conflict indicando que el stock ha sido comprometido por otra compra
         const err = new Error(`Lo sentimos, el stock es insuficiente para la prenda: "${variant.title}".`);
-        err.statusCode = 409; // Conflicto de recursos (concurrencia)
+        err.statusCode = 409;
         throw err;
       }
 
@@ -59,7 +69,7 @@ export const createCheckoutOrder = asyncHandler(async (req, res) => {
       });
     }
 
-    // 3. Crear el registro de la orden
+    // 3. Crear el registro principal de la orden de compra (orders)
     const orderQuery = `
       INSERT INTO orders (user_id, status, total_amount, shipping_address)
       VALUES ($1, 'completed', $2, $3)
@@ -72,9 +82,9 @@ export const createCheckoutOrder = asyncHandler(async (req, res) => {
     ]);
     const orderId = orderRes.rows[0].id;
 
-    // 4. Crear los detalles de la orden (order_items) y restar el stock
+    // 4. Crear los detalles individuales de la compra (order_items) y descontar el stock
     for (const item of itemsToProcess) {
-      // Registrar ítem de orden
+      // Registrar el desglose del producto en order_items
       const itemQuery = `
         INSERT INTO order_items (order_id, variant_id, price_at_purchase, quantity)
         VALUES ($1, $2, $3, $4)
@@ -86,7 +96,7 @@ export const createCheckoutOrder = asyncHandler(async (req, res) => {
         item.quantity
       ]);
 
-      // Decrementar stock de la variante
+      // Restar la cantidad comprada del inventario real en product_variants
       const updateStockQuery = `
         UPDATE product_variants 
         SET stock = stock - $1 
@@ -95,10 +105,10 @@ export const createCheckoutOrder = asyncHandler(async (req, res) => {
       await client.query(updateStockQuery, [item.quantity, item.variantId]);
     }
 
-    // 5. Limpiar los elementos del carrito en la base de datos ya que la compra fue exitosa
+    // 5. Limpiar el carrito de compras persistente en la DB una vez completada la venta
     await client.query("DELETE FROM cart_items WHERE user_id = $1", [userId]);
 
-    // 6. Confirmar la transacción
+    // 6. Si todo ha sido exitoso, confirmar la transacción (COMMIT) aplicando los cambios permanentemente
     await client.query("COMMIT");
 
     res.status(201).json({
@@ -108,7 +118,7 @@ export const createCheckoutOrder = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    // Revertir todos los cambios si algo falla
+    // Si ocurre cualquier error, aborta toda la transacción y restaura el stock original (ROLLBACK)
     await client.query("ROLLBACK");
     console.error("Transacción fallida - Rollback ejecutado:", error.message);
     
@@ -116,7 +126,8 @@ export const createCheckoutOrder = asyncHandler(async (req, res) => {
       error: error.message || "Error al procesar la transacción de compra"
     });
   } finally {
-    // Liberar la conexión al pool
+    // IMPORTANTE: Liberar la conexión dedicada de vuelta al pool de conexiones.
+    // Omitir esto generaría una fuga de conexiones (connection leak) que colapsaría el servidor.
     client.release();
   }
 });

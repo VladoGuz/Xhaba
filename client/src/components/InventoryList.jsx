@@ -3,6 +3,18 @@ import { Save, AlertCircle, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 
+/**
+ * Componente InventoryList (Inventario del Artesano).
+ * 
+ * Cumple con la Historia de Usuario HU-06. Proporciona a los maestros artesanos
+ * una vista de tabla interactiva para administrar existencias (stock) de sus variantes de productos.
+ * 
+ * Características clave:
+ * 1. Recupera el `artisan_id` del usuario logueado en el frontend.
+ * 2. Carga todas las prendas vinculadas a dicho artesano desde `/api/artisans/:id/products`.
+ * 3. Permite edición rápida "in-line" de existencias mediante entradas numéricas en cada celda.
+ * 4. Envía actualizaciones inmediatas al backend por medio de una petición PUT a `/api/artisans/variants/:variant_id/stock`.
+ */
 function InventoryList() {
   const { user } = useAuth();
   const [inventory, setInventory] = useState([]);

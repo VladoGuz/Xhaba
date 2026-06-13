@@ -2,8 +2,11 @@ import pool from "../config/db.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 /**
- * Obtener todos los usuarios de la base de datos (Exclusivo Administrador)
- * GET /api/admin/users
+ * Obtiene el listado completo de usuarios de la base de datos para la vista de moderación.
+ * 
+ * @route   GET /api/admin/users
+ * @desc    Consulta y retorna información de todos los usuarios registrados, ordenada alfabéticamente.
+ * @access  Privado (Admin)
  */
 export const getUsers = asyncHandler(async (req, res) => {
   const users = await pool.query(
@@ -13,29 +16,34 @@ export const getUsers = asyncHandler(async (req, res) => {
 });
 
 /**
- * Activar/Desactivar baneo de usuario (Exclusivo Administrador)
- * POST /api/admin/users/:id/toggle-ban
+ * Alterna el estado de suspensión (baneo) de un usuario en el sistema.
+ * 
+ * @route   POST /api/admin/users/:id/toggle-ban
+ * @desc    Busca al usuario por su UUID, invierte su estado 'is_banned' y actualiza la base de datos.
+ *          Contiene una regla de seguridad para impedir que el administrador se autobanee.
+ * @access  Privado (Admin)
  */
 export const toggleUserBan = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  // No permitir que el administrador se banee a sí mismo
+  // Regla preventiva: Evita que el administrador suspenda su propio acceso al panel
   if (id === req.user.id) {
     const err = new Error("No puedes suspender tu propia cuenta de administrador");
-    err.statusCode = 400;
+    err.statusCode = 400; // Bad Request
     throw err;
   }
 
   const userCheck = await pool.query("SELECT is_banned FROM users WHERE id = $1", [id]);
   if (userCheck.rows.length === 0) {
     const err = new Error("Usuario no encontrado");
-    err.statusCode = 404;
+    err.statusCode = 404; // Not Found
     throw err;
   }
 
   const currentStatus = userCheck.rows[0].is_banned;
   const newStatus = !currentStatus;
 
+  // Actualización del estado lógico en la DB
   await pool.query("UPDATE users SET is_banned = $1 WHERE id = $2", [newStatus, id]);
 
   res.json({
@@ -45,8 +53,12 @@ export const toggleUserBan = asyncHandler(async (req, res) => {
 });
 
 /**
- * Obtener todos los productos, incluyendo los ocultos (Exclusivo Administrador)
- * GET /api/admin/products
+ * Obtiene el listado completo de productos (prendas) incluyendo los que están ocultos.
+ * 
+ * @route   GET /api/admin/products
+ * @desc    Realiza un JOIN entre la tabla 'products' y 'artisans' para obtener los datos
+ *          de las prendas junto con el nombre del artesano que las confeccionó.
+ * @access  Privado (Admin)
  */
 export const getProducts = asyncHandler(async (req, res) => {
   const query = `
@@ -65,8 +77,13 @@ export const getProducts = asyncHandler(async (req, res) => {
 });
 
 /**
- * Ocultar/Mostrar producto (Exclusivo Administrador)
- * POST /api/admin/products/:id/toggle-hide
+ * Alterna la visibilidad (ocultamiento lógico) de un producto en la plataforma.
+ * 
+ * @route   POST /api/admin/products/:id/toggle-hide
+ * @desc    Busca el producto por su UUID, invierte su estado 'is_hidden' y lo actualiza.
+ *          Los productos ocultos no se muestran en el Home ni en el Catálogo general del cliente,
+ *          pero permanecen guardados en la DB para auditoría e historial de compras.
+ * @access  Privado (Admin)
  */
 export const toggleProductHide = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -74,7 +91,7 @@ export const toggleProductHide = asyncHandler(async (req, res) => {
   const productCheck = await pool.query("SELECT is_hidden FROM products WHERE id = $1", [id]);
   if (productCheck.rows.length === 0) {
     const err = new Error("Producto no encontrado");
-    err.statusCode = 404;
+    err.statusCode = 404; // Not Found
     throw err;
   }
 
@@ -90,17 +107,23 @@ export const toggleProductHide = asyncHandler(async (req, res) => {
 });
 
 /**
- * Obtener estadísticas reales de carritos abandonados
- * GET /api/admin/abandoned-carts
+ * Genera y calcula las estadísticas reales del módulo de carritos abandonados.
+ * 
+ * @route   GET /api/admin/abandoned-carts
+ * @desc    Ejecuta consultas agregadas en PostgreSQL para calcular:
+ *          1. Cantidad de clientes únicos con actividad en su carrito en las últimas 24h.
+ *          2. Valor económico total perdido sumando (base_price * quantity) de todos los cart_items activos.
+ *          3. Tasa de conversión/recuperación mediante la fórmula: (órdenes completadas / (órdenes completadas + carritos activos)).
+ * @access  Privado (Admin)
  */
 export const getAbandonedCartsStats = asyncHandler(async (req, res) => {
-  // 1. Carritos activos modificados en las últimas 24h
+  // 1. Carritos activos modificados en las últimas 24 horas usando filtros de INTERVAL de PostgreSQL
   const countRes = await pool.query(
     "SELECT COUNT(DISTINCT user_id) AS count FROM cart_items WHERE updated_at >= NOW() - INTERVAL '24 hours'"
   );
   const abandoned24h = parseInt(countRes.rows[0].count, 10);
 
-  // 2. Valor total perdido estimado
+  // 2. Valor total perdido estimado acumulado en la tabla cart_items
   const valueRes = await pool.query(`
     SELECT COALESCE(SUM(p.base_price * ci.quantity), 0) AS total
     FROM cart_items ci
@@ -109,7 +132,7 @@ export const getAbandonedCartsStats = asyncHandler(async (req, res) => {
   `);
   const totalValue = parseFloat(valueRes.rows[0].total);
 
-  // 3. Tasa de recuperación (Órdenes exitosas vs Carritos totales)
+  // 3. Tasa de recuperación (Órdenes exitosas vs Carritos totales persistentes)
   const ordersRes = await pool.query("SELECT COUNT(*) AS count FROM orders WHERE status = 'completed'");
   const completedOrders = parseInt(ordersRes.rows[0].count, 10);
 

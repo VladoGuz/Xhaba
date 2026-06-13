@@ -2,8 +2,11 @@ import pool from "../config/db.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 /**
- * Obtiene todos los artesanos ordenados por fecha de creación descendente.
- * GET /api/artisans
+ * Obtiene el listado completo de artesanos de Oaxaca.
+ * 
+ * @route   GET /api/artisans
+ * @desc    Consulta la tabla 'artisans' ordenando de manera descendente por fecha de registro.
+ * @access  Público
  */
 export const getArtisans = asyncHandler(async (req, res) => {
   const allArtisans = await pool.query(
@@ -13,15 +16,18 @@ export const getArtisans = asyncHandler(async (req, res) => {
 });
 
 /**
- * Crear un nuevo artesano.
- * POST /api/artisans
+ * Registra un nuevo perfil de artesano.
+ * 
+ * @route   POST /api/artisans
+ * @desc    Crea la entidad detallada del artesano con su biografía y geolocalización oaxaqueña.
+ * @access  Privado (Autenticado)
  */
 export const createArtisan = asyncHandler(async (req, res) => {
   const { name, community, state, bio } = req.body;
   
   if (!name || !community || !state) {
     const err = new Error("Nombre, comunidad y estado son campos obligatorios");
-    err.statusCode = 400;
+    err.statusCode = 400; // Bad Request
     throw err;
   }
 
@@ -34,8 +40,11 @@ export const createArtisan = asyncHandler(async (req, res) => {
 });
 
 /**
- * Obtener un artesano individual por su ID.
- * GET /api/artisans/:id
+ * Obtiene la información pública de un artesano específico por su UUID.
+ * 
+ * @route   GET /api/artisans/:id
+ * @desc    Consulta y retorna los datos del artesano indicado en los parámetros.
+ * @access  Público
  */
 export const getArtisanById = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -47,7 +56,7 @@ export const getArtisanById = asyncHandler(async (req, res) => {
 
   if (result.rows.length === 0) {
     const err = new Error("Artesano no encontrado");
-    err.statusCode = 404;
+    err.statusCode = 404; // Not Found
     throw err;
   }
 
@@ -55,8 +64,12 @@ export const getArtisanById = asyncHandler(async (req, res) => {
 });
 
 /**
- * Obtener productos y variantes de un artesano específico.
- * GET /api/artisans/:id/products
+ * Obtiene la lista completa de prendas de vestir y sus variantes de stock para un artesano.
+ * 
+ * @route   GET /api/artisans/:id/products
+ * @desc    Utiliza un LEFT JOIN sobre 'product_variants' para que, si el artesano tiene un producto
+ *          sin variantes declaradas, este aparezca igualmente en la lista con valores nulos de stock.
+ * @access  Privado (Autenticado)
  */
 export const getArtisanProducts = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -82,23 +95,28 @@ export const getArtisanProducts = asyncHandler(async (req, res) => {
 });
 
 /**
- * Actualizar el stock de una variante específica.
- * PUT /api/artisans/variants/:variantId/stock
+ * Actualiza el stock de inventario disponible para una variante específica.
+ * 
+ * @route   PUT /api/artisans/variants/:variantId/stock
+ * @desc    Establece de forma manual el stock físico de una talla/color del producto,
+ *          permitiendo reabastecer prendas agotadas en el catálogo.
+ * @access  Privado (Autenticado)
  */
 export const updateVariantStock = asyncHandler(async (req, res) => {
   const { variantId } = req.params;
   const { stock } = req.body;
 
+  // Validación de entrada numérica
   if (stock === undefined || isNaN(parseInt(stock, 10))) {
     const err = new Error("El stock debe ser un número válido");
-    err.statusCode = 400;
+    err.statusCode = 400; // Bad Request
     throw err;
   }
 
   const check = await pool.query("SELECT id FROM product_variants WHERE id = $1", [variantId]);
   if (check.rows.length === 0) {
     const err = new Error("Variante no encontrada");
-    err.statusCode = 404;
+    err.statusCode = 404; // Not Found
     throw err;
   }
 
@@ -114,17 +132,23 @@ export const updateVariantStock = asyncHandler(async (req, res) => {
 });
 
 /**
- * Obtener las valoraciones (reviews) de un artesano y su promedio de puntuación.
- * GET /api/artisans/:id/reviews
+ * Obtiene las reseñas escritas por los clientes para un artesano, junto al promedio general.
+ * 
+ * @route   GET /api/artisans/:id/reviews
+ * @desc    Consulta las reseñas asociadas al artesano y realiza una consulta agregada con AVG() de SQL,
+ *          redondeando el resultado a un decimal (numeric(10,1)) para la visualización de estrellas.
+ * @access  Público
  */
 export const getArtisanReviews = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
+  // Obtiene el detalle de opiniones
   const reviews = await pool.query(
     "SELECT id, customer_name, rating, comment, created_at FROM reviews WHERE artisan_id = $1 ORDER BY created_at DESC",
     [id]
   );
 
+  // Calcula el promedio de estrellas del artesano
   const stats = await pool.query(
     "SELECT AVG(rating)::numeric(10,1) as average FROM reviews WHERE artisan_id = $1",
     [id]
@@ -132,13 +156,17 @@ export const getArtisanReviews = asyncHandler(async (req, res) => {
 
   res.json({
     reviews: reviews.rows,
+    // Retorna fallback de 5.0 en caso de no registrar opiniones todavía
     average: parseFloat(stats.rows[0].average) || 5.0
   });
 });
 
 /**
- * Crear una nueva valoración (review) para un artesano.
- * POST /api/artisans/:id/reviews
+ * Crea una nueva valoración/reseña para el artesano.
+ * 
+ * @route   POST /api/artisans/:id/reviews
+ * @desc    Registra una reseña de satisfacción asociándola al perfil público del artesano.
+ * @access  Privado (Autenticado)
  */
 export const createArtisanReview = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -146,14 +174,14 @@ export const createArtisanReview = asyncHandler(async (req, res) => {
 
   if (!customerName || !rating) {
     const err = new Error("Nombre del cliente y calificación son obligatorios");
-    err.statusCode = 400;
+    err.statusCode = 400; // Bad Request
     throw err;
   }
 
   const checkArtisan = await pool.query("SELECT id FROM artisans WHERE id = $1", [id]);
   if (checkArtisan.rows.length === 0) {
     const err = new Error("Artesano no encontrado");
-    err.statusCode = 404;
+    err.statusCode = 404; // Not Found
     throw err;
   }
 

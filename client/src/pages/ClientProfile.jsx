@@ -2,9 +2,21 @@ import React, { useState } from 'react';
 import { User, MapPin, CreditCard, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * Componente ClientProfile (Perfil de Cliente).
+ * 
+ * Este componente representa el panel de administración personal para usuarios con rol de "cliente".
+ * Permite visualizar información del usuario autenticado, como datos personales, direcciones
+ * y métodos de pago (simulados en la base de datos o manejados por el estado local).
+ * 
+ * Funcionalidades clave para fines pedagógicos:
+ * 1. Consumo del estado global de autenticación (`useAuth`) para mostrar información en tiempo real del usuario.
+ * 2. Manejo de estado local (`activeSection`) para renderizado dinámico de pestañas sin cambiar de ruta.
+ * 3. Integración de la función `logout` para cierre seguro de sesión y redirección.
+ */
 function ClientProfile() {
-  const { user, logout } = useAuth();
-  const [activeSection, setActiveSection] = useState('personal');
+  const { user, logout } = useAuth(); // Consume datos y acción de cierre de sesión
+  const [activeSection, setActiveSection] = useState('personal'); // Pestaña de perfil activa: personal, address, payment
 
   return (
     <div className="min-h-screen bg-manta py-12 px-4 sm:px-6 lg:px-8">

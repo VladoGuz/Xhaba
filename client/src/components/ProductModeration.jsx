@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { EyeOff, Eye, AlertCircle, Loader } from 'lucide-react';
 import { apiFetch } from '../services/api';
 
+/**
+ * Componente ProductModeration (Moderación de Catálogo).
+ * 
+ * Cumple con la Historia de Usuario HU-08. Proporciona una interfaz para que los
+ * moderadores y administradores supervisen los textiles creados por artesanos.
+ * 
+ * Características clave:
+ * 1. Carga una lista sin filtros (ocultos y públicos) de todos los productos desde `/api/admin/products`.
+ * 2. Permite ocultar prendas inapropiadas o ajenas a la tradición textil regional ("Dar de baja").
+ * 3. Habilita la reactivación instantánea de cualquier prenda previamente oculta.
+ * 4. Persiste los cambios de visibilidad en base de datos mediante `/api/admin/products/:id/toggle-hide`.
+ */
 function ProductModeration() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);

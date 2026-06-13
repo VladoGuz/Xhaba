@@ -5,6 +5,19 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { getProductImageUrl } from '../utils/imageHelper';
 
+/**
+ * Componente ProductCard (Tarjeta de Producto).
+ * 
+ * Subcomponente de presentación interactiva utilizado en las cuadrículas de la Home y del Catálogo.
+ * 
+ * Propiedades (Props):
+ * @param {string} id - Identificador único (UUID) de la prenda.
+ * @param {string} title - Nombre comercial del textil.
+ * @param {number|string} price - Precio base en MXN.
+ * @param {string} artisan - Nombre y comunidad del artesano creador.
+ * @param {string} image - Ruta o nombre del archivo de imagen.
+ * @param {boolean} isUnique - Indicador lógico de existencia única (stock = 1).
+ */
 function ProductCard({ id, title, price, artisan, image, isUnique }) {
   const { addToCart } = useCart();
   const { user } = useAuth();

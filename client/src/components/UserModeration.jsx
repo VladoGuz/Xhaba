@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { apiFetch } from '../services/api';
 
+/**
+ * Componente UserModeration (Control de Cuentas y Moderación de Usuarios).
+ * 
+ * Cumple con la Historia de Usuario HU-09. Proporciona a los administradores una
+ * interfaz administrativa centralizada para auditar y gestionar las cuentas registradas en Xhaba.
+ * 
+ * Características clave:
+ * 1. Obtiene la lista completa de usuarios (clientes, artesanos, administradores) desde `/api/admin/users`.
+ * 2. Muestra indicadores de estado (Activo/Baneado) y roles.
+ * 3. Habilita la suspensión (baneo) de cuentas fraudulentas o de comportamiento inapropiado.
+ * 4. Envía la actualización al servidor mediante una petición POST a `/api/admin/users/:id/toggle-ban`.
+ */
 function UserModeration() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

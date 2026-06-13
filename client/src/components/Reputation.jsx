@@ -3,6 +3,18 @@ import { Star, MessageSquare, AlertCircle, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 
+/**
+ * Componente Reputation (Reputación del Artesano).
+ * 
+ * Cumple con la Historia de Usuario HU-07. Permite a los artesanos consultar su reputación
+ * promedio y ver las reseñas u opiniones detalladas que los clientes han dejado sobre sus piezas textiles.
+ * 
+ * Aspectos clave para fines pedagógicos:
+ * 1. Acceso al ID de artesano vinculado (`user.artisan_id`) de la sesión.
+ * 2. Carga reactiva de datos desde el endpoint `/api/artisans/:id/reviews`.
+ * 3. Renderizado de estrellas dinámicas basado en el puntaje de la reseña.
+ * 4. Presentación estructurada del promedio general y listado cronológico de comentarios.
+ */
 function Reputation() {
   const { user } = useAuth();
   const [reviews, setReviews] = useState([]);

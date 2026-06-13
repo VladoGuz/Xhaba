@@ -3,21 +3,33 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { User, Shield, Briefcase, Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * Vista de Inicio de Sesión (Login).
+ * 
+ * Permite autenticarse en Xhaba:
+ * 1. Si el usuario ya está autenticado, lo redirige automáticamente al Home (`<Navigate to="/" replace />`).
+ * 2. Presenta un formulario tradicional que realiza peticiones HTTP POST seguras.
+ * 3. Proporciona botones de "Acceso Rápido Demo" para agilizar pruebas de auditoría y evaluación
+ *    de los tres roles (Cliente, Artesano, Administrador).
+ */
 function Login() {
-  const { user, login } = useAuth();
+  const { user, login } = useAuth(); // Consume el estado de sesión global
   const navigate = useNavigate();
 
-  // Estados del formulario y de control
+  // Estados locales para los campos del formulario
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Suministra feedback visual de carga en el botón submit
 
-  // Si ya está logueado, redirigir al home
+  // Redirección reactiva de seguridad: Si ya hay sesión activa, impide volver a loguearse
   if (user) {
     return <Navigate to="/" replace />;
   }
 
+  /**
+   * Envía los datos del formulario al contexto de autenticación.
+   */
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setError(null);
@@ -25,7 +37,7 @@ function Login() {
 
     try {
       await login(email, password);
-      // Redirigir a Home
+      // Redirige al Home al autenticarse con éxito
       navigate('/');
     } catch (err) {
       console.error(err);
@@ -36,7 +48,11 @@ function Login() {
   };
 
   /**
-   * Método de ayuda para pruebas: auto-completa y envía el formulario
+   * Autocompleta y envía inmediatamente el formulario con credenciales preestablecidas.
+   * Utilizado únicamente para desarrollo, testing y revisión docente del proyecto.
+   * 
+   * @param {string} demoEmail
+   * @param {string} demoPassword
    */
   const handleQuickLogin = async (demoEmail, demoPassword) => {
     setError(null);
@@ -58,6 +74,7 @@ function Login() {
         <h2 className="text-3xl font-serif font-bold text-barro text-center mb-2">Iniciar Sesión</h2>
         <p className="text-gray-500 text-center mb-8">Ingresa a tu cuenta de Xhaba</p>
         
+        {/* Renderiza alerta roja de error de credenciales o de red */}
         {error && (
           <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md flex items-start gap-3 shadow-sm">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -65,7 +82,7 @@ function Login() {
           </div>
         )}
 
-        {/* Formulario de Login Real */}
+        {/* Formulario de Login */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -91,6 +108,7 @@ function Login() {
             />
           </div>
 
+          {/* Botón de envío dinámico */}
           <button 
             type="submit"
             disabled={loading}
@@ -110,14 +128,14 @@ function Login() {
           </button>
         </form>
 
-        {/* Separador */}
+        {/* Separador visual */}
         <div className="relative flex py-5 items-center">
           <div className="flex-grow border-t border-gray-200"></div>
           <span className="flex-shrink mx-4 text-gray-400 text-xs font-semibold uppercase tracking-wider">Acceso Rápido Demo</span>
           <div className="flex-grow border-t border-gray-200"></div>
         </div>
 
-        {/* Botones de simulación / acceso rápido */}
+        {/* Botones de simulación / acceso rápido de testing */}
         <div className="space-y-3">
           <button 
             onClick={() => handleQuickLogin('client@xhaba.com', 'client123')}

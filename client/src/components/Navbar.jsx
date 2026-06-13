@@ -4,6 +4,18 @@ import { ShoppingBag, Search, Menu, UserCircle, Shield, LogIn } from 'lucide-rea
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * Componente Navbar (Barra de Navegación Global).
+ * 
+ * Renderiza el menú superior con posicionamiento persistente (sticky).
+ * 
+ * Funcionalidades clave:
+ * 1. Acceso al contexto global de autenticación (`useAuth`) para mostrar de manera condicional 
+ *    los accesos de acuerdo al rol del usuario (Cliente -> Perfil/Bolsa, Artesano -> Taller, Administrador -> Admin).
+ * 2. Acceso al contexto de la bolsa (`useCart`) para calcular en caliente y renderizar el contador
+ *    de piezas agregadas sobre el ícono de compra.
+ * 3. Caja de búsqueda integrada que redirige dinámicamente al catálogo agregando el query param `?search=valor`.
+ */
 function Navbar() {
   const { cartItems } = useCart();
   const { user } = useAuth();

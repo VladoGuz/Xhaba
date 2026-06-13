@@ -1,11 +1,20 @@
 import pool from "./db.js";
 import bcrypt from "bcryptjs";
 
+/**
+ * Asegura la existencia y actualización del esquema de la base de datos (migraciones)
+ * y realiza el sembrado (seeding) inicial de datos para pruebas.
+ * 
+ * Este método corre de forma automática cada vez que se levanta el servidor Express.
+ * Ejecuta consultas DDL (Data Definition Language) de forma idempotente (usando IF NOT EXISTS)
+ * y DML (Data Manipulation Language) verificando previamente la existencia de registros.
+ */
 export const ensureDatabaseSchema = async () => {
   try {
     console.log("Checking database schema updates...");
     
-    // 1. Agregar columnas en la tabla users y relacionar con artisans
+    // 1. Agregar columnas faltantes a la tabla 'users' para perfiles detallados de artesanos y clientes,
+    // y para permitir el bloqueo/suspensión de cuentas ('is_banned').
     await pool.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS age INTEGER;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS municipio VARCHAR(255);
@@ -14,12 +23,13 @@ export const ensureDatabaseSchema = async () => {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS artisan_id UUID REFERENCES artisans(id) ON DELETE SET NULL;
     `);
 
-    // 2. Agregar columnas en la tabla products
+    // 2. Agregar columnas a la tabla 'products' para soportar el ocultamiento lógico de prendas.
     await pool.query(`
       ALTER TABLE products ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE;
     `);
 
-    // 3. Crear tabla de reviews si no existe
+    // 3. Crear tabla de calificaciones/reseñas ('reviews') si no existe.
+    // Vincula a un artesano ('artisan_id') y guarda el nombre del cliente, puntaje de 1 a 5, y comentario.
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reviews (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -31,7 +41,8 @@ export const ensureDatabaseSchema = async () => {
       );
     `);
 
-    // 4. Crear tabla de product_images si no existe
+    // 4. Crear tabla de imágenes de productos ('product_images') si no existe.
+    // Permite soportar múltiples imágenes por producto, indicando cuál es la imagen principal ('is_primary').
     await pool.query(`
       CREATE TABLE IF NOT EXISTS product_images (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -42,7 +53,9 @@ export const ensureDatabaseSchema = async () => {
       );
     `);
 
-    // 5. Crear tabla de cart_items si no existe
+    // 5. Crear tabla del carrito de compras persistente ('cart_items') si no existe.
+    // Vincula el usuario ('user_id') con la variante de producto ('variant_id') y su cantidad.
+    // Posee una restricción UNIQUE compuesta para evitar duplicar la misma variante para un mismo usuario.
     await pool.query(`
       CREATE TABLE IF NOT EXISTS cart_items (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,7 +70,9 @@ export const ensureDatabaseSchema = async () => {
 
     console.log("✅ Database columns and tables checked.");
 
-    // 4. Listado de 18 artesanos (3 por cada una de las 6 regiones con imágenes) a sembrar
+    // 6. Listado de 18 artesanos demostrativos distribuidos en las regiones representativas de Oaxaca
+    // (Valles Centrales, Istmo, Costa, Mixteca, Papaloapan, Cañada) con sus respectivos productos
+    // e imágenes físicas reales de ropa típica.
     const artisansToSeed = [
       // === VALLES CENTRALES ===
       {
@@ -501,7 +516,7 @@ export const ensureDatabaseSchema = async () => {
 
     const saltRounds = 10;
 
-    // 5. Sembrar cuentas de Juan Cliente y Admin Principal si no existen
+    // 7. Sembrar cuentas predeterminadas de Juan Cliente y Admin Principal para facilitar pruebas
     const demoAccounts = [
       { name: "Juan Cliente", email: "client@xhaba.com", password: "client123", age: 30, municipio: "Oaxaca de Juárez", barrio: "Centro", role: "client" },
       { name: "Admin Principal", email: "admin@xhaba.com", password: "admin123", age: null, municipio: null, barrio: null, role: "admin" }
@@ -527,10 +542,13 @@ export const ensureDatabaseSchema = async () => {
       }
     }
 
-    // 6. Sembrar Artesanos de Regiones y sus productos transaccionalmente
+    // 8. Sembrar la lista de artesanos y sus respectivos productos de forma idempotente.
+    // Esto asegura que si ya existen los artesanos y prendas en la base de datos,
+    // el script no intente recrearlos ni arroje errores por llaves duplicadas.
     console.log("Seeding regional artisans, users, and products...");
     for (const art of artisansToSeed) {
-      // a. Sembrar registro de artesano
+      
+      // a. Insertar en la tabla 'artisans'
       let artisanId;
       const checkArt = await pool.query(
         "SELECT id FROM artisans WHERE name = $1 AND community = $2",
@@ -538,6 +556,8 @@ export const ensureDatabaseSchema = async () => {
       );
 
       if (checkArt.rows.length === 0) {
+        // La Familia Mendoza tiene un UUID preestablecido ('a4444444-4444-4444-4444-444444444444')
+        // para facilitar la vinculación estática de reseñas en el seeding posterior.
         const isMendoza = art.name === "Familia Mendoza";
         const insertQuery = isMendoza
           ? `INSERT INTO artisans (id, name, community, state, bio) VALUES ('a4444444-4444-4444-4444-444444444444', $1, $2, 'Oaxaca', $3) RETURNING id`
@@ -549,10 +569,10 @@ export const ensureDatabaseSchema = async () => {
         artisanId = checkArt.rows[0].id;
       }
 
-      // b. Sembrar usuario de artesano
+      // b. Crear la cuenta de usuario de tipo 'artisan' vinculada al perfil del artesano creado
       const checkUser = await pool.query("SELECT id FROM users WHERE email = $1", [art.email]);
       if (checkUser.rows.length === 0) {
-        // Todos los artesanos comparten contraseña "artisan123" para consistencia
+        // Todos los artesanos sembrados tienen la misma contraseña predeterminada: 'artisan123'
         const userHash = await bcrypt.hash("artisan123", saltRounds);
         await pool.query(
           `INSERT INTO users (name, email, password_hash, age, municipio, barrio, role, artisan_id)
@@ -560,13 +580,14 @@ export const ensureDatabaseSchema = async () => {
           [art.name, art.email, userHash, art.age, art.municipio, art.barrio, artisanId]
         );
       } else {
+        // En caso de que el usuario ya exista pero no tenga referenciado su artisan_id, lo actualiza.
         await pool.query(
           "UPDATE users SET artisan_id = $1 WHERE email = $2 AND artisan_id IS NULL",
           [artisanId, art.email]
         );
       }
 
-      // c. Sembrar cada uno de sus productos
+      // c. Sembrar cada uno de los productos que ofrece el artesano
       for (const prod of art.products) {
         const checkProd = await pool.query(
           "SELECT id FROM products WHERE artisan_id = $1 AND title = $2",
@@ -575,6 +596,8 @@ export const ensureDatabaseSchema = async () => {
 
         if (checkProd.rows.length === 0) {
           let productId;
+          // Si el producto tiene un ID duro preestablecido (para pruebas consistentes de endpoints) se respeta,
+          // de lo contrario se autogenera en PostgreSQL.
           const insertProdQuery = prod.id
             ? `INSERT INTO products (id, artisan_id, title, description, technique, material, category, base_price)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
@@ -588,16 +611,16 @@ export const ensureDatabaseSchema = async () => {
           const prodRes = await pool.query(insertProdQuery, prodParams);
           productId = prodRes.rows[0].id;
 
-          // d. Sembrar variante por defecto vinculada al producto
+          // d. Sembrar la variante por defecto (talla, color e inventario/stock) para habilitar compras
           await pool.query(
             `INSERT INTO product_variants (product_id, color, size_label, stock)
              VALUES ($1, 'Único/Tradicional', $2, $3)`,
             [productId, prod.size, prod.stock]
           );
 
-          // e. Sembrar las múltiples fotos asociadas al producto
+          // e. Sembrar las múltiples fotos asociadas al producto en la tabla 'product_images'
           for (let i = 0; i < prod.images.length; i++) {
-            const isPrimary = i === 0;
+            const isPrimary = i === 0; // La primera imagen del arreglo será la principal
             await pool.query(
               `INSERT INTO product_images (product_id, image_name, is_primary)
                VALUES ($1, $2, $3)`,
@@ -608,7 +631,7 @@ export const ensureDatabaseSchema = async () => {
       }
     }
 
-    // 7. Sembrar valoraciones (reviews) reales de prueba si la tabla está vacía
+    // 9. Sembrar reseñas demostrativas de clientes reales sobre la Familia Mendoza si no existen reseñas previas
     const mendozaId = "a4444444-4444-4444-4444-444444444444";
     const reviewCheck = await pool.query("SELECT COUNT(*) FROM reviews");
     if (parseInt(reviewCheck.rows[0].count, 10) === 0) {

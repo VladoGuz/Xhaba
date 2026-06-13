@@ -1,27 +1,40 @@
 /**
- * Helper para resolver de forma dinámica imágenes de prendas en Vite.
- * Mapea nombres de archivos en client/src/assets/ropa_tipica
+ * Helper para resolver de forma dinámica imágenes de prendas en el empaquetador Vite.
+ * 
+ * @param {string} imageName - Nombre del archivo de imagen (ej. "valles1.jpg").
+ * @returns {string} URL absoluta resuelta para renderizar en la etiqueta <img>.
+ * 
+ * Explicación didáctica para Vite:
+ * En entornos compilados (Vite/Webpack), no podemos usar concatenaciones simples como `src={'./assets/' + name}`
+ * porque las imágenes se procesan en la compilación y cambian de nombre (agregan un hash de versión).
+ * La API nativa `new URL(path, import.meta.url)` le indica a Vite que debe registrar
+ * estáticamente ese directorio de recursos estáticos ('ropa_tipica') e incluir las imágenes en el compilado final.
  */
 export const getProductImageUrl = (imageName) => {
+  // Retorna una foto por defecto de Unsplash como fallback si no se provee imagen
   if (!imageName) {
     return "https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?q=80&w=600&auto=format&fit=crop";
   }
   
+  // Si la imagen ya es una URL absoluta externa (ej. cargada por URL en la DB) la retorna sin modificar
   if (imageName.startsWith("http://") || imageName.startsWith("https://")) {
     return imageName;
   }
   
   try {
-    // La sintaxis new URL es analizada estáticamente por Vite tanto para dev como para build
+    // Resuelve dinámicamente la ruta física de los activos locales compilados de Vite
     return new URL(`../assets/ropa_tipica/${imageName}`, import.meta.url).href;
   } catch (error) {
-    console.error("Error cargando recurso visual:", imageName, error);
+    console.error("Error cargando recurso visual local en Xhaba:", imageName, error);
+    // Retorna fallback decorativo ante fallas
     return "https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?q=80&w=600&auto=format&fit=crop";
   }
 };
 
 /**
- * Lista de imágenes disponibles para el selector visual
+ * Listado de imágenes locales disponibles en 'client/src/assets/ropa_tipica'.
+ * Utilizado por el selector visual de prendas en el formulario del artesano (ProductForm.jsx)
+ * para asociar fotos correctas a los productos.
  */
 export const AVAILABLE_PRODUCT_IMAGES = [
   { name: "valles1.jpg", label: "Huipil de San Antonino (Valles Centrales 1)" },

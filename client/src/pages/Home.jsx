@@ -2,11 +2,23 @@ import React, { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
 import { productService } from '../services/product.service';
 
+/**
+ * Vista de la Página de Inicio (Home).
+ * 
+ * Renderiza el banner de bienvenida y la sección principal del catálogo de Xhaba
+ * mostrando las primeras 6 prendas disponibles, recuperadas directamente de la base de datos.
+ * 
+ * Implementa:
+ * - Skeleton loaders (esqueletos de carga) animados para mejorar la experiencia percibida.
+ * - Captura y visualización de errores de conexión.
+ * - Validación lógica de "Pieza Única" (si alguna variante del producto cuenta con exactamente stock: 1).
+ */
 function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Carga inicial del catálogo destacado al montar la vista
   useEffect(() => {
     const fetchHomeProducts = async () => {
       try {
@@ -25,6 +37,7 @@ function Home() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Banner de Bienvenida Tradicional */}
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-serif font-bold text-barro">
           Riqueza Textil de los Valles Centrales
@@ -35,7 +48,7 @@ function Home() {
       </div>
 
       {loading ? (
-        /* Skeletons de Carga Premium */
+        /* Skeletons de Carga Premium - Muestra tarjetas grises animadas mientras responde la API */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="bg-white rounded-2xl h-96 animate-pulse border border-pink-50 flex flex-col justify-between p-6">
@@ -50,6 +63,7 @@ function Home() {
           ))}
         </div>
       ) : error ? (
+        /* Estado de Error: Botón de reintento manual */
         <div className="text-center py-12 bg-white rounded-2xl border border-pink-100 p-8 shadow-sm">
           <p className="text-red-500 font-semibold text-lg">{error}</p>
           <button
@@ -60,9 +74,10 @@ function Home() {
           </button>
         </div>
       ) : (
-        /* Cuadrícula de Productos Dinámica */
+        /* Cuadrícula de Productos Dinámica - Muestra hasta 6 productos del catálogo */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {products.slice(0, 6).map((product) => {
+            // Un producto se etiqueta como pieza única si tiene stock limitado a 1 en cualquiera de sus tallas/variantes
             const isUnique = product.variants && product.variants.some(v => v.stock === 1);
             return (
               <ProductCard
@@ -71,6 +86,7 @@ function Home() {
                 title={product.title}
                 price={product.base_price}
                 artisan={`${product.artisan_name} (${product.artisan_community})`}
+                // Si el producto no tiene fotos registradas, asigna 'papaloapan1.jpg' como fallback
                 image={product.images && product.images[0] ? product.images[0] : 'papaloapan1.jpg'}
                 isUnique={isUnique}
               />

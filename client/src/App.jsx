@@ -22,20 +22,27 @@ import ArtisanDashboard from './pages/ArtisanDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
 /**
- * Componente Principal (App)
- * Configura la estructura base (Layout) de la aplicación y define las Rutas (URLs)
- * para navegar entre las diferentes vistas sin recargar la página.
+ * Componente Raíz de la Interfaz (App).
+ * 
+ * Define la estructura general de la página (Layout) que mantiene fijos la barra
+ * de navegación (Navbar) y el pie de página (Footer). 
+ * 
+ * Implementa el árbol de enrutamiento del lado del cliente utilizando React Router DOM,
+ * protegiendo las vistas de clientes, artesanos y administradores a través del
+ * envoltorio condicional 'ProtectedRoute'.
  */
 function App() {
   return (
     <div className="bg-manta min-h-screen font-sans flex flex-col justify-between">
       <div>
-        {/* Barra de navegación siempre visible en la parte superior */}
+        {/* Barra de navegación superior reactiva */}
         <Navbar />
         
-        {/* Definición de Rutas: Muestra el componente dependiendo de la URL */}
+        {/* Declaración de rutas dinámicas de Xhaba */}
         <Routes>
-          {/* Rutas Públicas */}
+          {/* ========================================================
+              RUTAS PÚBLICAS: Accesibles por cualquier usuario invitado
+              ======================================================== */}
           <Route path="/" element={<Home />} />
           <Route path="/catalog" element={<Catalog />} />
           <Route path="/product/:id" element={<ProductDetail />} />
@@ -43,20 +50,26 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/artisan/:id" element={<ArtisanProfile />} />
           
-          {/* Rutas Privadas: Cliente */}
+          {/* ========================================================
+              RUTAS DE CLIENTES: Requieren rol 'client'
+              ======================================================== */}
           <Route path="/cart" element={<ProtectedRoute rolesAllowed={['client']}><Cart /></ProtectedRoute>} />
           <Route path="/checkout" element={<ProtectedRoute rolesAllowed={['client']}><Checkout /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute rolesAllowed={['client']}><ClientProfile /></ProtectedRoute>} />
           
-          {/* Rutas Privadas: Artesano */}
+          {/* ========================================================
+              RUTAS DE ARTESANOS: Requieren rol 'artisan'
+              ======================================================== */}
           <Route path="/dashboard" element={<ProtectedRoute rolesAllowed={['artisan']}><ArtisanDashboard /></ProtectedRoute>} />
           
-          {/* Rutas Privadas: Administrador */}
+          {/* ========================================================
+              RUTAS DE ADMINISTRADOR: Requieren rol 'admin'
+              ======================================================== */}
           <Route path="/admin" element={<ProtectedRoute rolesAllowed={['admin']}><AdminDashboard /></ProtectedRoute>} />
         </Routes>
       </div>
       
-      {/* Pie de página siempre visible al fondo */}
+      {/* Pie de página descriptivo */}
       <Footer />
     </div>
   );

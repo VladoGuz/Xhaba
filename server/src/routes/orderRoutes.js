@@ -4,10 +4,18 @@ import { authenticateToken, authorizeRoles } from "../middlewares/authMiddleware
 
 const router = express.Router();
 
-// Las rutas de órdenes requieren inicio de sesión y rol de cliente
+/**
+ * Control de acceso a nivel de Router:
+ * Únicamente los usuarios logueados con el rol 'client' pueden realizar compras.
+ */
 router.use(authenticateToken);
 router.use(authorizeRoles("client"));
 
+/**
+ * @route   POST /api/orders/checkout
+ * @desc    Procesa la orden de compra transaccional, bloquea y valida el stock disponible.
+ * @access  Privado (Cliente)
+ */
 router.post("/checkout", createCheckoutOrder);
 
 export default router;

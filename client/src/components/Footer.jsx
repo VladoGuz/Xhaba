@@ -1,5 +1,16 @@
 import React from 'react';
 
+/**
+ * Componente Footer (Pie de Página).
+ * 
+ * Renderiza el pie de página global de Xhaba.
+ * 
+ * Detalles de diseño para fines pedagógicos:
+ * 1. Utiliza colores de la paleta rústica: `bg-barro-dark` (tonos de barro negro o terracota oscurecido)
+ *    con acentos en `border-grana` (rojo cochinilla) para marcar una separación visual con el contenido.
+ * 2. Estructura de rejilla responsiva (`grid-cols-1 md:grid-cols-4`) para enlaces institucionales,
+ *    regiones de Oaxaca y datos de contacto de soporte.
+ */
 const Footer = () => {
   return (
     <footer className="bg-barro-dark text-manta pt-16 pb-8 border-t-4 border-grana mt-20">

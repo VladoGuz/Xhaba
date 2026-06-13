@@ -6,29 +6,41 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { getProductImageUrl } from '../utils/imageHelper';
 
+/**
+ * Vista de Detalle de Prenda (ProductDetail).
+ * 
+ * Renderiza la ficha técnica completa de una prenda de vestir:
+ * 1. Obtiene el UUID del producto de la URL de navegación (`useParams`).
+ * 2. Carga los datos agregados (prendas, imágenes, variantes) desde el backend.
+ * 3. Preselecciona automáticamente la primera variante de talla/color disponible.
+ * 4. Permite filtrar dinámicamente las tallas correspondientes al color de lienzo seleccionado.
+ * 5. Muestra una advertencia visual si la variante actual seleccionada es la última pieza en existencia.
+ * 6. Invoca el `addToCart` global validando los permisos del rol del usuario.
+ */
 function ProductDetail() {
-  const { id } = useParams();
+  const { id } = useParams(); // Parámetro dinámico de la URL (ej: /product/:id)
   const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const { user } = useAuth();
+  const { addToCart } = useCart(); // Consume la acción global de agregar a la bolsa
+  const { user } = useAuth(); // Valida el estado del usuario para restringir compras
 
-  // Estados de datos
+  // Estados de carga de datos
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados de la variante seleccionada
+  // Estados de variantes activas seleccionadas por el cliente
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
-  const [addedAlert, setAddedAlert] = useState(false);
+  const [addedAlert, setAddedAlert] = useState(false); // Estado para mostrar la alerta temporizada de éxito
 
+  // Efecto: Carga la prenda y establece la variante inicial por defecto
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const data = await productService.getProductById(id);
         setProduct(data);
 
-        // Preseleccionar la primera variante disponible si existen
+        // Algoritmo de Preselección: Busca la primera variante que tenga stock físico > 0
         if (data.variants && data.variants.length > 0) {
           const firstAvailable = data.variants.find(v => v.stock > 0) || data.variants[0];
           setSelectedColor(firstAvailable.color);
@@ -45,7 +57,7 @@ function ProductDetail() {
     fetchProduct();
   }, [id]);
 
-  // Si está cargando
+  // Renderizado condicional: Spinner de carga mientras responde la API
   if (loading) {
     return (
       <div className="min-h-screen bg-manta flex items-center justify-center p-8">
@@ -57,7 +69,7 @@ function ProductDetail() {
     );
   }
 
-  // Si hay error
+  // Renderizado condicional: Tarjeta de error si el UUID no existe
   if (error || !product) {
     return (
       <div className="min-h-screen bg-manta py-16 px-4 flex items-center justify-center">
@@ -75,21 +87,25 @@ function ProductDetail() {
     );
   }
 
-  // Agrupar colores únicos disponibles
+  // Agrupar colores únicos disponibles mediante Set
   const availableColors = [...new Set(product.variants.map(v => v.color))].filter(Boolean);
 
-  // Obtener tallas asociadas al color seleccionado
+  // Filtrado de tallas asociadas al color seleccionado
   const sizesForSelectedColor = product.variants.filter(v => v.color === selectedColor);
 
-  // Encontrar el objeto de variante actualmente seleccionado
+  // Mapear el objeto de la variante que coincide exactamente con la selección
   const currentVariant = product.variants.find(
     v => v.color === selectedColor && v.size === selectedSize
   ) || product.variants[0];
 
-  // Verificar si hay stock
+  // Comprobaciones de existencias físicas
   const isOutOfStock = !product.variants || product.variants.length === 0 || !product.variants.some(v => v.stock > 0);
   const isCurrentVariantOutOfStock = currentVariant ? currentVariant.stock === 0 : true;
 
+  /**
+   * Procesa la adición de la prenda a la bolsa.
+   * Valida roles para asegurar que el comprador sea de tipo 'client'.
+   */
   const handleAddToCartClick = () => {
     if (!user || user.role !== 'client') {
       alert('Debes iniciar sesión como cliente para poder realizar compras.');
@@ -102,7 +118,7 @@ function ProductDetail() {
       return;
     }
 
-    // Estructurar el ítem para añadir a la bolsa
+    // Estructurar el ítem enviando el 'variant_id' (currentVariant.variant_id) como llave primaria
     addToCart({
       id: currentVariant.variant_id || product.product_id,
       productId: product.product_id,
@@ -114,6 +130,7 @@ function ProductDetail() {
       size: selectedSize,
     });
 
+    // Muestra alerta verde flotante y la apaga tras 4 segundos
     setAddedAlert(true);
     setTimeout(() => setAddedAlert(false), 4000);
   };
@@ -122,7 +139,7 @@ function ProductDetail() {
     <main className="min-h-screen bg-manta py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* Enlace de regreso y migas de pan */}
+        {/* Migas de pan y navegación retrospectiva */}
         <div className="flex items-center gap-2 mb-8">
           <Link 
             to="/catalog" 
@@ -137,7 +154,7 @@ function ProductDetail() {
           <span className="text-sm text-gray-900 font-bold truncate max-w-[250px] md:max-w-md">{product.title}</span>
         </div>
 
-        {/* Alerta de Éxito al agregar al Carrito */}
+        {/* Alerta animada de Éxito de reserva */}
         {addedAlert && (
           <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold p-4 rounded-2xl shadow-xl mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in-down">
             <div className="flex items-center gap-3">
@@ -156,11 +173,11 @@ function ProductDetail() {
           </div>
         )}
 
-        {/* DETALLE PRINCIPAL DEL PRODUCTO */}
+        {/* FICHA TÉCNICA PRINCIPAL DE LA PRENDA */}
         <section className="bg-white rounded-3xl border border-pink-100/50 shadow-sm overflow-hidden mb-12">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             
-            {/* COLUMNA IZQUIERDA: GALERIA DE IMAGENES */}
+            {/* COLUMNA IZQUIERDA: VISUALIZADOR DE IMAGEN CON HELPER VITE */}
             <div className="p-6 md:p-8 bg-gradient-to-br from-pink-50/20 to-white flex flex-col justify-center relative border-b lg:border-b-0 lg:border-r border-gray-100">
               <div className="relative rounded-2xl overflow-hidden shadow-inner aspect-square max-h-[500px] mx-auto w-full group">
                 <img 
@@ -169,12 +186,13 @@ function ProductDetail() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 
-                {/* Badges Flotantes */}
+                {/* Badges Flotantes Informativos */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                   <span className="bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md flex items-center gap-1.5 animate-gradient-x">
                     <Sparkles className="w-3.5 h-3.5 text-yellow-200" />
                     <span>Pieza de Autor</span>
                   </span>
+                  {/* Alerta de pieza única (stock = 1) para urgencia de compra */}
                   {currentVariant && currentVariant.stock === 1 && (
                     <span className="bg-amber-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md animate-pulse">
                       ¡Única pieza en existencia!
@@ -184,7 +202,7 @@ function ProductDetail() {
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: SELECCION DE VARIANTES Y DETALLES */}
+            {/* COLUMNA DERECHA: CONFIGURADOR DE PRENDA (TALLAS, COLORES Y METADATOS) */}
             <div className="p-8 md:p-12 flex flex-col justify-between">
               <div>
                 
@@ -196,18 +214,18 @@ function ProductDetail() {
                   {product.title}
                 </h1>
 
-                {/* Artesano y Comunidad */}
+                {/* Artesano y Comunidad de Origen */}
                 <p className="text-gray-500 font-medium mb-6">
                   Elaborado por la artesana: <span className="text-rose-600 font-bold">{product.artisan_name}</span> en la comunidad zapoteca de <span className="text-gray-700 font-semibold">{product.artisan_community}</span>.
                 </p>
 
-                {/* Precio */}
+                {/* Precio Base */}
                 <div className="pb-6 border-b border-gray-100 mb-6">
                   <span className="text-4xl font-black text-gray-900">${product.base_price}</span>
                   <span className="text-sm font-semibold text-gray-400 ml-2">MXN</span>
                 </div>
 
-                {/* Badges de Técnica y Material */}
+                {/* Ficha de Metadatos de la Prenda */}
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="bg-fuchsia-50/50 border border-fuchsia-100 rounded-2xl p-4">
                     <span className="text-[10px] uppercase font-bold text-fuchsia-500 block mb-1">Técnica Empleada</span>
@@ -219,11 +237,11 @@ function ProductDetail() {
                   </div>
                 </div>
 
-                {/* SELECTORES DE VARIANTES */}
+                {/* SELECTORES DE VARIANTES REACTIVAS */}
                 {!isOutOfStock ? (
                   <div className="space-y-6 mb-8">
                     
-                    {/* Selector de Color */}
+                    {/* Selector de Color de Manta */}
                     {availableColors.length > 0 && (
                       <div>
                         <label className="block text-xs uppercase font-bold tracking-wider text-gray-500 mb-3">Color de Lienzo</label>
@@ -233,7 +251,7 @@ function ProductDetail() {
                               key={color}
                               onClick={() => {
                                 setSelectedColor(color);
-                                // Seleccionar la primera talla disponible para este color
+                                // Selecciona automáticamente la primera talla del color recién elegido
                                 const matchingSizes = product.variants.filter(v => v.color === color);
                                 const availableSize = matchingSizes.find(s => s.stock > 0) || matchingSizes[0];
                                 setSelectedSize(availableSize.size);
@@ -247,7 +265,7 @@ function ProductDetail() {
                       </div>
                     )}
 
-                    {/* Selector de Talla */}
+                    {/* Selector de Tallas con indicador de stock */}
                     {sizesForSelectedColor.length > 0 && (
                       <div>
                         <label className="block text-xs uppercase font-bold tracking-wider text-gray-500 mb-3">Talla de la Prenda</label>
@@ -255,7 +273,7 @@ function ProductDetail() {
                           {sizesForSelectedColor.map(variant => (
                             <button
                               key={variant.variant_id}
-                              disabled={variant.stock === 0}
+                              disabled={variant.stock === 0} // Deshabilita la opción si el stock en la base de datos es 0
                               onClick={() => setSelectedSize(variant.size)}
                               className={`px-4.5 py-2.5 rounded-xl text-sm font-bold border transition-all flex flex-col items-center justify-center min-w-[70px] ${variant.stock === 0 ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed line-through' : selectedSize === variant.size ? 'bg-rose-600 border-rose-600 text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'}`}
                             >
@@ -294,7 +312,7 @@ function ProductDetail() {
 
               </div>
 
-              {/* ACCION DE COMPRA */}
+              {/* ACCIÓN DE AGREGAR A LA BOLSA */}
               <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={handleAddToCartClick}
@@ -319,7 +337,7 @@ function ProductDetail() {
           </div>
         </section>
 
-        {/* SECCION SECUNDARIA: HISTORIA DEL CREADOR (EL ALMA DE LA PRENDA) */}
+        {/* HISTORIA DEL ARTESANO CREADOR */}
         <section className="bg-gradient-to-br from-cochinilla/10 via-cempasuchil/5 to-white rounded-3xl p-8 md:p-12 border border-cochinilla/10 flex flex-col md:flex-row items-center gap-8 shadow-inner">
           <div className="w-20 h-20 bg-gradient-to-tr from-cochinilla to-cempasuchil rounded-full flex items-center justify-center text-white shrink-0 shadow-lg">
             <UserCheck className="w-10 h-10" />
@@ -332,7 +350,7 @@ function ProductDetail() {
               Conoce a {product.artisan_name}
             </h2>
             <p className="text-gray-700 leading-relaxed max-w-4xl font-medium">
-              {product.artisan_bio || "Esta hermosa pieza artesanal ha sido confeccionada con devoción e historia por manos tejedoras oaxaqueñas. Cada bordado y patrón representa años de legado familiar y tradiciones transmitidas de generación en generación."}
+              {product.artisan_bio || "Esta hermosa pieza artesanal ha sido confeccionada con devoción e historia por manos tejedoras oaxaqueñas. Cada bordado y patrón representa años de legado familiar y traditions transmitidas de generación en generación."}
             </p>
             <p className="text-xs font-semibold text-cempasuchil mt-4">
               📍 Creado en la comunidad de: {product.artisan_community}, Oaxaca.
@@ -340,7 +358,7 @@ function ProductDetail() {
           </div>
         </section>
 
-        {/* SECCION TERCIARIA: GARANTIAS ARTESANALES */}
+        {/* GARANTÍAS ADICIONALES DEL E-COMMERCE */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
           <div className="bg-white p-6 rounded-2xl border border-pink-50 shadow-sm flex items-start gap-4">
             <div className="p-3 bg-pink-50 rounded-xl text-pink-500">

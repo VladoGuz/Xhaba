@@ -3,6 +3,18 @@ import { Upload, Tag, Image as ImageIcon, CheckCircle, AlertCircle, Loader } fro
 import { apiFetch } from '../services/api';
 import { AVAILABLE_PRODUCT_IMAGES, getProductImageUrl } from '../utils/imageHelper';
 
+/**
+ * Componente ProductForm (Formulario de Registro de Prendas).
+ * 
+ * Cumple con la Historia de Usuario HU-05. Proporciona una interfaz estructurada
+ * para que los artesanos puedan publicar nuevas prendas hechas a mano en el catálogo.
+ * 
+ * Características clave:
+ * 1. Campos específicos de procedencia artesanal: técnica (ej. Telar de pedal) y material (ej. Lana).
+ * 2. Visualizador y selector dinámico de imágenes utilizando el helper de Vite (`getProductImageUrl`).
+ * 3. Envío de datos tipados (conversión de stock a entero y precio a flotante).
+ * 4. Petición POST a `/api/products` para registrar el producto y su variante inicial en una transacción única.
+ */
 function ProductForm() {
   const [formData, setFormData] = useState({
     category: 'Huipiles',

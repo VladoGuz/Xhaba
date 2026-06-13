@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, TrendingDown, Loader, AlertCircle } from 'lucide-react';
 import { apiFetch } from '../services/api';
 
+/**
+ * Componente AbandonedCarts (Monitoreo de Carritos Abandonados).
+ * 
+ * Widget para el panel de administración (AdminDashboard) que cumple con la Historia de Usuario HU-10.
+ * Obtiene y visualiza métricas agregadas directamente desde el servidor acerca de los carritos de compras
+ * activos o inactivos que aún no se han procesado como órdenes de compra.
+ * 
+ * Conceptos clave:
+ * 1. Petición segura mediante `apiFetch` al endpoint administrativo `/api/admin/abandoned-carts`.
+ * 2. Visualización agregada del total de carritos guardados, el valor monetario estimado retenido 
+ *    y la tasa de conversión/recuperación del e-commerce.
+ */
 function AbandonedCarts() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);

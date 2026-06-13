@@ -5,16 +5,36 @@ import { validateRegister, validateLogin } from "../validators/authValidator.js"
 
 const router = express.Router();
 
-// Ruta para el registro de usuarios con validador intermedio
+/**
+ * @route   POST /api/auth/register
+ * @desc    Registra un nuevo usuario en la plataforma.
+ * @access  Público
+ * @handler validateRegister (validador de campos) -> register (controlador de creación)
+ */
 router.post("/register", validateRegister, register);
 
-// Ruta para el inicio de sesión con validador intermedio
+/**
+ * @route   POST /api/auth/login
+ * @desc    Inicia sesión, verifica credenciales y establece la cookie JWT 'xhaba_session'.
+ * @access  Público
+ * @handler validateLogin (validador de formato) -> login (autenticación)
+ */
 router.post("/login", validateLogin, login);
 
-// Ruta para el cierre de sesión
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Cierra la sesión del usuario limpiando la cookie 'xhaba_session'.
+ * @access  Público
+ * @handler logout
+ */
 router.post("/logout", logout);
 
-// Ruta para obtener la sesión del usuario actual (protegida con token)
+/**
+ * @route   GET /api/auth/me
+ * @desc    Retorna la información del usuario autenticado en la sesión actual.
+ * @access  Privado (Requiere cookie JWT)
+ * @handler authenticateToken (verificación de firma JWT) -> getMe (lectura de datos)
+ */
 router.get("/me", authenticateToken, getMe);
 
 export default router;

@@ -5,21 +5,26 @@ import { useCart } from '../context/CartContext';
 import { apiFetch } from '../services/api';
 
 /**
- * Componente Checkout (Historia de Usuario HU-02)
- * Realiza el proceso de pago y la validación de concurrencia de inventario transaccionalmente.
- * Asegura que si dos clientes compran una pieza única al mismo tiempo, 
- * solo uno tenga éxito y el otro reciba un mensaje de error (Rollback real en BD).
+ * Vista de Checkout/Pago de Compras (Checkout) - Historia de Usuario HU-02.
+ * 
+ * Simula una pasarela de pago que invoca al endpoint transaccional del backend.
+ * Demuestra de forma didáctica la protección contra concurrencia:
+ * - Envía los artículos del carrito (`cartItems`) al servidor.
+ * - Si el servidor detecta stock suficiente, disminuye el inventario y retorna éxito.
+ * - Si otra petición paralela agota la prenda antes, el servidor retorna HTTP 409 Conflict.
+ * - El frontend captura dicho error y notifica del conflicto transaccional (Rollback).
  */
 function Checkout() {
   const { cartItems, total, clearCart } = useCart();
   const navigate = useNavigate();
   
-  // Estado para manejar el flujo del pago: idle | loading | success | error
+  // Manejo de estados de la transacción:
+  // 'idle' (esperando acción), 'loading' (procesando compra), 'success' (compra confirmada), 'error' (sobreventa/fallo)
   const [status, setStatus] = useState('idle'); 
   const [errorMessage, setErrorMessage] = useState('');
 
   /**
-   * Realiza la petición a la pasarela de pago transaccional en el backend.
+   * Envía la solicitud de checkout al backend envuelta en la pasarela de pago.
    */
   const handlePayment = async (e) => {
     e.preventDefault();
@@ -27,6 +32,7 @@ function Checkout() {
     setErrorMessage('');
 
     try {
+      // Petición al endpoint transaccional del backend
       await apiFetch("/api/orders/checkout", {
         method: "POST",
         body: JSON.stringify({
@@ -36,14 +42,16 @@ function Checkout() {
       });
 
       setStatus('success');
-      clearCart();
+      clearCart(); // Limpia la bolsa local de compras tras el éxito de pago
     } catch (err) {
-      console.error("Error al procesar checkout real:", err);
+      console.error("Error al procesar checkout real en base de datos:", err);
+      // Captura el mensaje específico de stock insuficiente o conflicto arrojado por el backend
       setErrorMessage(err.message || "Lo sentimos, ocurrió un conflicto de inventario al procesar tu compra.");
       setStatus('error');
     }
   };
 
+  // Validación: Si no hay artículos y no se ha procesado compra, redirecciona
   if (cartItems.length === 0 && status === 'idle') {
     return (
       <div className="min-h-screen bg-manta flex items-center justify-center">
@@ -57,10 +65,12 @@ function Checkout() {
       <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100">
         <h2 className="text-3xl font-serif font-bold text-barro mb-6 text-center">Pasarela de Pago (Real BD)</h2>
         
+        {/* Desglose total de pago */}
         <div className="mb-8 p-4 bg-gray-50 rounded-lg">
           <p className="text-center text-lg">Total a pagar: <strong className="text-xl text-barro">${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong></p>
         </div>
 
+        {/* Flujo Exitoso */}
         {status === 'success' && (
           <div className="text-center py-8">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -70,6 +80,7 @@ function Checkout() {
           </div>
         )}
 
+        {/* Flujo de Error por Concurrencia (Rollback) */}
         {status === 'error' && (
           <div className="text-center py-8">
             <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
@@ -80,6 +91,7 @@ function Checkout() {
           </div>
         )}
 
+        {/* Formulario de Pago (Visa/Mastercard) */}
         {(status === 'idle' || status === 'loading') && (
           <form onSubmit={handlePayment} className="space-y-6">
             <div>

@@ -4,13 +4,25 @@ import { User, MapPin, AlertCircle, Loader } from 'lucide-react';
 import ReviewForm from '../components/ReviewForm';
 import { apiFetch } from '../services/api';
 
+/**
+ * Componente ArtisanProfile (Perfil Público del Artesano).
+ * 
+ * Renderiza la ficha pública de un artesano registrado en la plataforma.
+ * 
+ * Funcionalidades clave para fines pedagógicos:
+ * 1. Obtención dinámica del ID de artesano desde los parámetros de ruta (`useParams`).
+ * 2. Carga reactiva de metadatos (biografía, comunidad zapoteca, estado) de la base de datos mediante `apiFetch`.
+ * 3. Renderizado del formulario de valoraciones y reseñas (`ReviewForm`), permitiendo calificar 
+ *    el trabajo del artesano en cumplimiento de la Historia de Usuario HU-04 (Reputación y Reseñas).
+ */
 function ArtisanProfile() {
-  const { id } = useParams();
+  const { id } = useParams(); // ID del artesano recuperado de la URL (ej: /artisan/:id)
   const navigate = useNavigate();
-  const [artisan, setArtisan] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [artisan, setArtisan] = useState(null); // Datos del artesano cargados desde el backend
+  const [loading, setLoading] = useState(true); // Control de spinner de carga
+  const [error, setError] = useState(null); // Almacenamiento de errores de red o base de datos
 
+  // Carga el perfil del artesano al montar el componente o cambiar el ID
   useEffect(() => {
     const fetchArtisanProfile = async () => {
       try {
