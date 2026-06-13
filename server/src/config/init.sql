@@ -19,6 +19,7 @@ CREATE TABLE products (
     material VARCHAR(255) NOT NULL,
     category VARCHAR(100) NOT NULL,
     base_price NUMERIC(10, 2) NOT NULL,
+    is_hidden BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (artisan_id) REFERENCES artisans(id) ON DELETE RESTRICT
 );
 
@@ -40,7 +41,10 @@ CREATE TABLE users (
     role VARCHAR(50) DEFAULT 'client',
     age INTEGER,
     municipio VARCHAR(255),
-    barrio VARCHAR(255)
+    barrio VARCHAR(255),
+    is_banned BOOLEAN DEFAULT FALSE,
+    artisan_id UUID,
+    FOREIGN KEY (artisan_id) REFERENCES artisans(id) ON DELETE SET NULL
 );
 
 CREATE TABLE orders (
@@ -62,4 +66,35 @@ CREATE TABLE order_items (
     quantity INTEGER DEFAULT 1,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
+);
+
+CREATE TABLE reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    artisan_id UUID NOT NULL,
+    customer_name VARCHAR(255) NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (artisan_id) REFERENCES artisans(id) ON DELETE CASCADE
+);
+
+CREATE TABLE product_images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID NOT NULL,
+    image_name VARCHAR(255) NOT NULL,
+    is_primary BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE TABLE cart_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    variant_id UUID NOT NULL,
+    quantity INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, variant_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE CASCADE
 );

@@ -11,64 +11,7 @@ import bcrypt from "bcryptjs";
  */
 export const ensureDatabaseSchema = async () => {
   try {
-    console.log("Checking database schema updates...");
-    
-    // 1. Agregar columnas faltantes a la tabla 'users' para perfiles detallados de artesanos y clientes,
-    // y para permitir el bloqueo/suspensión de cuentas ('is_banned').
-    await pool.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS age INTEGER;
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS municipio VARCHAR(255);
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS barrio VARCHAR(255);
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT FALSE;
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS artisan_id UUID REFERENCES artisans(id) ON DELETE SET NULL;
-    `);
-
-    // 2. Agregar columnas a la tabla 'products' para soportar el ocultamiento lógico de prendas.
-    await pool.query(`
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE;
-    `);
-
-    // 3. Crear tabla de calificaciones/reseñas ('reviews') si no existe.
-    // Vincula a un artesano ('artisan_id') y guarda el nombre del cliente, puntaje de 1 a 5, y comentario.
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS reviews (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        artisan_id UUID NOT NULL REFERENCES artisans(id) ON DELETE CASCADE,
-        customer_name VARCHAR(255) NOT NULL,
-        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-        comment TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // 4. Crear tabla de imágenes de productos ('product_images') si no existe.
-    // Permite soportar múltiples imágenes por producto, indicando cuál es la imagen principal ('is_primary').
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS product_images (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-        image_name VARCHAR(255) NOT NULL,
-        is_primary BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // 5. Crear tabla del carrito de compras persistente ('cart_items') si no existe.
-    // Vincula el usuario ('user_id') con la variante de producto ('variant_id') y su cantidad.
-    // Posee una restricción UNIQUE compuesta para evitar duplicar la misma variante para un mismo usuario.
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS cart_items (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        variant_id UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
-        quantity INTEGER DEFAULT 1,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE (user_id, variant_id)
-      );
-    `);
-
-    console.log("✅ Database columns and tables checked.");
+    console.log("Checking and seeding database demo data...");
 
     // 6. Listado de 18 artesanos demostrativos distribuidos en las regiones representativas de Oaxaca
     // (Valles Centrales, Istmo, Costa, Mixteca, Papaloapan, Cañada) con sus respectivos productos
