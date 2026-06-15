@@ -67,7 +67,8 @@ export const getProducts = asyncHandler(async (req, res) => {
       p.title,
       p.category,
       p.is_hidden,
-      a.name AS artisan_name
+      a.name AS artisan_name,
+      COALESCE((SELECT SUM(stock) FROM product_variants WHERE product_id = p.id), 0) AS total_stock
     FROM products p
     JOIN artisans a ON p.artisan_id = a.id
     ORDER BY p.title ASC;

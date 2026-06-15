@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, logout, getMe, uploadAvatar, deleteAvatar } from "../controllers/authController.js";
+import { register, login, logout, getMe, uploadAvatar, deleteAvatar, updateProfile, getAddresses, createAddress, deleteAddress } from "../controllers/authController.js";
 import { authenticateToken } from "../middlewares/authMiddleware.js";
 import { validateRegister, validateLogin } from "../validators/authValidator.js";
 import { upload } from "../middlewares/upload.js";
@@ -51,5 +51,34 @@ router.put("/avatar", authenticateToken, upload.single('image'), uploadAvatar);
  * @access  Privado
  */
 router.delete("/avatar", authenticateToken, deleteAvatar);
+
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Actualiza los datos personales del usuario (nombre, email, edad, municipio, barrio).
+ *          El rol de cuenta NO es modificable por este endpoint.
+ * @access  Privado (Requiere cookie JWT)
+ */
+router.put("/profile", authenticateToken, updateProfile);
+
+/**
+ * @route   GET /api/auth/addresses
+ * @desc    Obtiene las direcciones del usuario autenticado
+ * @access  Privado
+ */
+router.get("/addresses", authenticateToken, getAddresses);
+
+/**
+ * @route   POST /api/auth/addresses
+ * @desc    Crea una nueva dirección
+ * @access  Privado
+ */
+router.post("/addresses", authenticateToken, createAddress);
+
+/**
+ * @route   DELETE /api/auth/addresses/:id
+ * @desc    Elimina una dirección
+ * @access  Privado
+ */
+router.delete("/addresses/:id", authenticateToken, deleteAddress);
 
 export default router;

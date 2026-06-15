@@ -40,7 +40,21 @@ function Navbar() {
           <div className="flex justify-between items-center h-20">
             
             <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
-              <Link to="/home">
+              <Link 
+                to="/home" 
+                onClick={(e) => {
+                  if (window.location.pathname === '/home' || window.location.pathname === '/') {
+                    e.preventDefault();
+                    if ('scrollRestoration' in window.history) {
+                      window.history.scrollRestoration = 'manual';
+                    }
+                    window.scrollTo(0, 0);
+                    window.location.reload();
+                  } else {
+                    window.scrollTo(0, 0);
+                  }
+                }}
+              >
                 <span className="font-serif text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cempasuchil to-cochinilla tracking-tight hover:scale-105 transition-transform inline-block animate-gradient-x">
                   Xhaba
                 </span>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, Search, RotateCcw, Tag, Sparkles } from 'lucide-react';
+import { SlidersHorizontal, Search, RotateCcw, Tag, Sparkles, MapPin } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { productService } from '../services/product.service';
 
@@ -61,7 +61,8 @@ function Catalog() {
 
   // Extracción dinámica de categorías y técnicas únicas utilizando 'Set' de JavaScript
   // Evita declarar categorías de forma dura y se adapta automáticamente a lo registrado en la DB
-  const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
+  const excludedCategories = ['Blusas', 'Huipiles', 'Rebozos'];
+  const categories = [...new Set(products.map(p => p.category))].filter(c => c && !excludedCategories.includes(c));
   const techniques = [...new Set(products.map(p => p.technique))].filter(Boolean);
 
   const handleResetFilters = () => {
@@ -213,16 +214,10 @@ function Catalog() {
             <div className="mb-6">
               <label className="block text-sm font-bold text-gray-700 mb-2">Categoría</label>
               <div className="flex flex-col gap-2">
-                <button 
-                  onClick={() => { setSelectedCategory(''); setSearchParams(prev => { prev.delete('category'); return prev; }); }}
-                  className={`text-left text-sm py-2 px-3 rounded-lg font-medium transition-all ${!selectedCategory ? 'bg-fuchsia-50 text-fuchsia-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  Todas las prendas
-                </button>
                 {categories.map(category => (
                   <button 
                     key={category}
-                    onClick={() => { setSelectedCategory(category); setSearchParams(prev => { prev.set('category', category); return prev; }); }}
+                    onClick={() => { const next = new URLSearchParams(searchParams); next.set('category', category); setSearchParams(next); }}
                     className={`text-left text-sm py-2 px-3 rounded-lg font-medium transition-all ${selectedCategory === category ? 'bg-fuchsia-50 text-fuchsia-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
                   >
                     {category}
@@ -231,7 +226,30 @@ function Catalog() {
               </div>
             </div>
 
-
+            {/* Selector de Regiones */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-fuchsia-400" />
+                Región
+              </label>
+              <div className="flex flex-col gap-2">
+                <button 
+                  onClick={() => { const next = new URLSearchParams(searchParams); next.delete('region'); setSearchParams(next); }}
+                  className={`text-left text-sm py-2 px-3 rounded-lg font-medium transition-all ${!selectedRegion ? 'bg-fuchsia-50 text-fuchsia-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  Todas las regiones
+                </button>
+                {['Valles Centrales', 'Istmo', 'Costa', 'Mixteca', 'Papaloapan', 'Cañada'].map(region => (
+                  <button 
+                    key={region}
+                    onClick={() => { const next = new URLSearchParams(searchParams); next.set('region', region); setSearchParams(next); }}
+                    className={`text-left text-sm py-2 px-3 rounded-lg font-medium transition-all ${selectedRegion === region ? 'bg-fuchsia-50 text-fuchsia-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    {region}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Selector de Técnicas (Dropdown) */}
             <div className="mb-6">

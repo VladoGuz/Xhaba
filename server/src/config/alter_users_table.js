@@ -13,6 +13,30 @@ export const ensureDatabaseSchema = async () => {
   try {
     console.log("Checking and seeding database demo data...");
 
+    // Migración: Asegurar que la columna 'profile_picture' existe en la tabla 'users'
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture VARCHAR(255)
+    `);
+
+    // Migración: Asegurar que la columna 'estado' existe en la tabla 'users'
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS estado VARCHAR(255)
+    `);
+
+    // Migración: Crear tabla 'addresses' si no existe
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS addresses (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        label VARCHAR(100) DEFAULT 'Casa',
+        estado VARCHAR(255),
+        municipio VARCHAR(255),
+        barrio VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     // 6. Listado de 18 artesanos demostrativos distribuidos en las regiones representativas de Oaxaca
     // (Valles Centrales, Istmo, Costa, Mixteca, Papaloapan, Cañada) con sus respectivos productos
     // e imágenes físicas reales de ropa típica.

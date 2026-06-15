@@ -13,7 +13,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
  * @access  Público
  */
 export const register = asyncHandler(async (req, res) => {
-  const { name, email, password, age, municipio, barrio, role } = req.body;
+  const { name, email, password, age, estado, municipio, barrio, role } = req.body;
 
   // Las validaciones de campos obligatorios ya se procesaron en validateRegister middleware.
   
@@ -29,26 +29,61 @@ export const register = asyncHandler(async (req, res) => {
   const saltRounds = 10;
   const passwordHash = await bcrypt.hash(password, saltRounds);
 
-  // Guardar en la base de datos y retornar los datos del usuario omitiendo el hash de la contraseña
-  const newUserQuery = `
-    INSERT INTO users (name, email, password_hash, age, municipio, barrio, role)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id, name, email, age, municipio, barrio, role, profile_picture
-  `;
-  
-  const newUser = await pool.query(newUserQuery, [
-    name.trim(),
-    email.toLowerCase().trim(),
-    passwordHash,
-    age ? parseInt(age, 10) : null,
-    municipio ? municipio.trim() : null,
-    barrio ? barrio.trim() : null,
-    role || "client"
-  ]);
+  const client = await pool.connect();
+  let newUser;
+
+  try {
+    await client.query('BEGIN');
+
+    let newArtisanId = null;
+    
+    // Si es artesano, primero crearle su perfil en la tabla de artesanos
+    if (role === 'artisan') {
+      const artisanQuery = `
+        INSERT INTO artisans (name, community, state)
+        VALUES ($1, $2, $3)
+        RETURNING id
+      `;
+      const artisanRes = await client.query(artisanQuery, [
+        name.trim(),
+        municipio ? municipio.trim() : 'Desconocido',
+        estado ? estado.trim() : 'Oaxaca'
+      ]);
+      newArtisanId = artisanRes.rows[0].id;
+    }
+
+    // Guardar en la base de datos y retornar los datos del usuario omitiendo el hash de la contraseña
+    const newUserQuery = `
+      INSERT INTO users (name, email, password_hash, age, estado, municipio, barrio, role, artisan_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id, name, email, age, estado, municipio, barrio, role, profile_picture, artisan_id
+    `;
+    
+    const userRes = await client.query(newUserQuery, [
+      name.trim(),
+      email.toLowerCase().trim(),
+      passwordHash,
+      age ? parseInt(age, 10) : null,
+      estado ? estado.trim() : null,
+      municipio ? municipio.trim() : null,
+      barrio ? barrio.trim() : null,
+      role || "client",
+      newArtisanId
+    ]);
+
+    newUser = userRes.rows[0];
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 
   res.status(201).json({
     message: "Usuario registrado con éxito",
-    user: newUser.rows[0]
+    user: newUser
   });
 });
 
@@ -88,8 +123,8 @@ export const login = asyncHandler(async (req, res) => {
     throw err;
   }
 
-  // Generar token JWT mediante el servicio firmando { id, email, role }
-  const token = generateToken({ id: user.id, email: user.email, role: user.role });
+  // Generar token JWT mediante el servicio firmando { id, email, role, artisan_id }
+  const token = generateToken({ id: user.id, email: user.email, role: user.role, artisan_id: user.artisan_id });
 
   // Configurar Cookie HTTP-only en la respuesta
   res.cookie("xhaba_session", token, {
@@ -106,10 +141,12 @@ export const login = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       age: user.age,
+      estado: user.estado,
       municipio: user.municipio,
       barrio: user.barrio,
       role: user.role,
-      profile_picture: user.profile_picture
+      profile_picture: user.profile_picture,
+      artisan_id: user.artisan_id
     }
   });
 });
@@ -140,7 +177,7 @@ export const logout = asyncHandler(async (req, res) => {
  */
 export const getMe = asyncHandler(async (req, res) => {
   const userQuery = await pool.query(
-    "SELECT id, name, email, age, municipio, barrio, role, profile_picture FROM users WHERE id = $1",
+    "SELECT id, name, email, age, estado, municipio, barrio, role, profile_picture, artisan_id FROM users WHERE id = $1",
     [req.user.id]
   );
 
@@ -153,6 +190,124 @@ export const getMe = asyncHandler(async (req, res) => {
   res.json({
     user: userQuery.rows[0]
   });
+});
+
+/**
+ * Actualiza los datos del perfil del usuario autenticado.
+ * 
+ * @route   PUT /api/auth/profile
+ * @desc    Permite modificar nombre, email, edad, municipio y barrio del usuario.
+ *          El rol de cuenta NO puede ser modificado por este endpoint por seguridad.
+ * @access  Privado (Requiere sesión iniciada)
+ */
+export const updateProfile = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { name, email, age, estado, municipio, barrio } = req.body;
+
+  // Validar que al menos se envíe el nombre
+  if (!name || !name.trim()) {
+    const err = new Error("El nombre es obligatorio");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Verificar que el email no esté en uso por otro usuario
+  if (email) {
+    const emailCheck = await pool.query(
+      "SELECT id FROM users WHERE email = $1 AND id != $2",
+      [email.toLowerCase().trim(), userId]
+    );
+    if (emailCheck.rows.length > 0) {
+      const err = new Error("El correo electrónico ya está en uso por otra cuenta");
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
+  const updatedUser = await pool.query(
+    `UPDATE users 
+     SET name = $1, email = $2, age = $3, estado = $4, municipio = $5, barrio = $6
+     WHERE id = $7
+     RETURNING id, name, email, age, estado, municipio, barrio, role, profile_picture`,
+    [
+      name.trim(),
+      email ? email.toLowerCase().trim() : null,
+      age ? parseInt(age, 10) : null,
+      estado ? estado.trim() : null,
+      municipio ? municipio.trim() : null,
+      barrio ? barrio.trim() : null,
+      userId
+    ]
+  );
+
+  res.json({
+    message: "Perfil actualizado con éxito",
+    user: updatedUser.rows[0]
+  });
+});
+
+// ========== DIRECCIONES ==========
+
+/**
+ * Obtiene todas las direcciones del usuario autenticado.
+ * @route   GET /api/auth/addresses
+ * @access  Privado
+ */
+export const getAddresses = asyncHandler(async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM addresses WHERE user_id = $1 ORDER BY created_at DESC",
+    [req.user.id]
+  );
+  res.json({ addresses: result.rows });
+});
+
+/**
+ * Crea una nueva dirección para el usuario autenticado.
+ * @route   POST /api/auth/addresses
+ * @access  Privado
+ */
+export const createAddress = asyncHandler(async (req, res) => {
+  const { label, estado, municipio, barrio } = req.body;
+
+  if (!estado && !municipio && !barrio) {
+    const err = new Error("Debes llenar al menos un campo de la dirección");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const result = await pool.query(
+    `INSERT INTO addresses (user_id, label, estado, municipio, barrio)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
+    [req.user.id, label || 'Casa', estado || null, municipio || null, barrio || null]
+  );
+
+  res.status(201).json({
+    message: "Dirección agregada",
+    address: result.rows[0]
+  });
+});
+
+/**
+ * Elimina una dirección del usuario autenticado.
+ * @route   DELETE /api/auth/addresses/:id
+ * @access  Privado
+ */
+export const deleteAddress = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await pool.query(
+    "DELETE FROM addresses WHERE id = $1 AND user_id = $2 RETURNING id",
+    [id, req.user.id]
+  );
+
+  if (result.rows.length === 0) {
+    const err = new Error("Dirección no encontrada");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  res.json({ message: "Dirección eliminada" });
 });
 
 import fs from 'fs';

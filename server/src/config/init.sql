@@ -42,9 +42,22 @@ CREATE TABLE users (
     age INTEGER,
     municipio VARCHAR(255),
     barrio VARCHAR(255),
+    estado VARCHAR(255),
     is_banned BOOLEAN DEFAULT FALSE,
+    profile_picture VARCHAR(255),
     artisan_id UUID,
     FOREIGN KEY (artisan_id) REFERENCES artisans(id) ON DELETE SET NULL
+);
+
+CREATE TABLE addresses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    label VARCHAR(100) DEFAULT 'Casa',
+    estado VARCHAR(255),
+    municipio VARCHAR(255),
+    barrio VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE orders (

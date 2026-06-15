@@ -42,7 +42,7 @@ function ProductModeration() {
       });
 
       // Actualizar estado local
-      setProducts(products.map(p => 
+      setProducts(products.map(p =>
         p.product_id === id ? { ...p, is_hidden: result.is_hidden } : p
       ));
 
@@ -85,6 +85,7 @@ function ProductModeration() {
               <th className="p-4 font-medium">Producto</th>
               <th className="p-4 font-medium">Artesano</th>
               <th className="p-4 font-medium">Categoría</th>
+              <th className="p-4 font-medium text-center">Inventario</th>
               <th className="p-4 font-medium">Estado</th>
               <th className="p-4 font-medium">Acción</th>
             </tr>
@@ -92,7 +93,7 @@ function ProductModeration() {
           <tbody className="divide-y divide-gray-100">
             {products.length === 0 ? (
               <tr>
-                <td colSpan="5" className="p-8 text-center text-gray-500 font-medium">No hay productos registrados en el sistema.</td>
+                <td colSpan="6" className="p-8 text-center text-gray-500 font-medium">No hay productos registrados en el sistema.</td>
               </tr>
             ) : (
               products.map((p) => (
@@ -100,13 +101,14 @@ function ProductModeration() {
                   <td className="p-4 font-medium text-gray-900">{p.title}</td>
                   <td className="p-4 text-gray-600">{p.artisan_name}</td>
                   <td className="p-4 text-gray-600">{p.category}</td>
+                  <td className="p-4 text-gray-600 text-center">{p.total_stock}</td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${!p.is_hidden ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {!p.is_hidden ? 'Público' : 'Oculto'}
                     </span>
                   </td>
                   <td className="p-4">
-                    <button 
+                    <button
                       onClick={() => toggleStatus(p.product_id)}
                       className={`flex items-center gap-1 text-sm px-3 py-1.5 rounded font-medium transition-colors ${!p.is_hidden ? 'text-white bg-red-600 hover:bg-red-700' : 'text-gray-700 bg-gray-200 hover:bg-gray-300'}`}
                     >

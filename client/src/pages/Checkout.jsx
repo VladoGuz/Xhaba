@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, AlertTriangle, CheckCircle } from 'lucide-react';
+import { CreditCard, AlertTriangle, CheckCircle, MapPin } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 
 /**
@@ -16,12 +17,50 @@ import { apiFetch } from '../services/api';
  */
 function Checkout() {
   const { cartItems, total, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   // Manejo de estados de la transacción:
   // 'idle' (esperando acción), 'loading' (procesando compra), 'success' (compra confirmada), 'error' (sobreventa/fallo)
   const [status, setStatus] = useState('idle'); 
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Direcciones
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState('');
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const data = await apiFetch('/api/auth/addresses');
+        setAddresses(data.addresses || []);
+      } catch (err) {
+        console.error('Error al cargar direcciones:', err);
+      }
+    };
+    if (user) {
+      fetchAddresses();
+    }
+  }, [user]);
+
+  const addressOptions = [];
+  const defaultAddrStr = [user?.barrio, user?.municipio, user?.estado].filter(Boolean).join(', ');
+  if (defaultAddrStr) {
+    addressOptions.push({ id: 'default', label: 'Registro: ' + defaultAddrStr, value: defaultAddrStr });
+  }
+  addresses.forEach(a => {
+    const addrStr = [a.barrio, a.municipio, a.estado].filter(Boolean).join(', ');
+    if (addrStr) {
+      addressOptions.push({ id: a.id, label: `${a.label}: ${addrStr}`, value: addrStr });
+    }
+  });
+
+  // Establecer dirección seleccionada por defecto
+  useEffect(() => {
+    if (!selectedAddress && addressOptions.length > 0) {
+      setSelectedAddress(addressOptions[0].value);
+    }
+  }, [addressOptions, selectedAddress]);
 
   /**
    * Envía la solicitud de checkout al backend envuelta en la pasarela de pago.
@@ -37,7 +76,7 @@ function Checkout() {
         method: "POST",
         body: JSON.stringify({
           cartItems,
-          shippingAddress: "Valles Centrales, Oaxaca, México"
+          shippingAddress: selectedAddress || "Valles Centrales, Oaxaca, México"
         })
       });
 
@@ -91,9 +130,36 @@ function Checkout() {
           </div>
         )}
 
-        {/* Formulario de Pago (Visa/Mastercard) */}
+        {/* Selección de Dirección de Envío y Formulario de Pago */}
         {(status === 'idle' || status === 'loading') && (
-          <form onSubmit={handlePayment} className="space-y-6">
+          <>
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2"><MapPin className="w-5 h-5 text-barro" /> Dirección de Envío</h3>
+              {addressOptions.length > 0 ? (
+                <div className="relative">
+                  <select 
+                    value={selectedAddress} 
+                    onChange={(e) => setSelectedAddress(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none text-gray-700 bg-gray-50 focus:bg-white focus:border-barro transition-colors appearance-none"
+                    disabled={status === 'loading'}
+                  >
+                    {addressOptions.map(opt => (
+                      <option key={opt.id} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-amber-700 text-sm p-4 bg-amber-50 rounded-lg border border-amber-200 flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-500" />
+                  <p>No tienes una dirección completa registrada en tu perfil ni direcciones adicionales. El envío se mandará por defecto a Oaxaca.</p>
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={handlePayment} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Número de Tarjeta</label>
               <div className="relative">
@@ -120,6 +186,7 @@ function Checkout() {
               {status === 'loading' ? 'Procesando pago en base de datos...' : 'Pagar Ahora'}
             </button>
           </form>
+          </>
         )}
       </div>
     </div>

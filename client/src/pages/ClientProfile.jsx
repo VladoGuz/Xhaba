@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { User, MapPin, CreditCard, Camera, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, MapPin, CreditCard, Camera, FileText, Pencil, Save, X } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { useAuth } from '../context/AuthContext';
+import mexicanStates from '../data/mexicanStates';
 
 /**
  * Componente ClientProfile (Perfil de Cliente).
@@ -21,6 +22,92 @@ function ClientProfile() {
   const { user, logout, refreshSession } = useAuth(); // Consume datos y acción de cierre de sesión
   const [activeSection, setActiveSection] = useState('personal'); // Pestaña de perfil activa: personal, address, payment
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  
+  // Estados para edición de perfil
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState('');
+  const [editForm, setEditForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    age: user?.age || '',
+    municipio: user?.municipio || '',
+    barrio: user?.barrio || ''
+  });
+
+  // Estados para edición de dirección
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [addressError, setAddressError] = useState('');
+  const [addressSuccess, setAddressSuccess] = useState('');
+  const [addressForm, setAddressForm] = useState({
+    label: 'Casa',
+    estado: '',
+    municipio: '',
+    barrio: ''
+  });
+
+  // Estado para lista de direcciones guardadas
+  const [addresses, setAddresses] = useState([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+
+  const fetchAddresses = async () => {
+    setLoadingAddresses(true);
+    try {
+      const data = await apiFetch('/api/auth/addresses');
+      setAddresses(data.addresses || []);
+    } catch (err) {
+      console.error('Error al cargar direcciones:', err);
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === 'address') {
+      fetchAddresses();
+    }
+  }, [activeSection]);
+
+  const handleStartEditing = () => {
+    setEditForm({
+      name: user?.name || '',
+      email: user?.email || '',
+      age: user?.age || '',
+      municipio: user?.municipio || '',
+      barrio: user?.barrio || ''
+    });
+    setEditError('');
+    setEditSuccess('');
+    setIsEditing(true);
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditing(false);
+    setEditError('');
+    setEditSuccess('');
+  };
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setEditError('');
+    setEditSuccess('');
+    try {
+      await apiFetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      });
+      await refreshSession();
+      setEditSuccess('Datos actualizados correctamente');
+      setIsEditing(false);
+    } catch (err) {
+      setEditError(err.message || 'Error al actualizar los datos');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files[0];
@@ -87,9 +174,32 @@ function ClientProfile() {
         <div className="flex-1 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
           {activeSection === 'personal' && (
             <div>
-              <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6 flex items-center gap-2"><User className="w-6 h-6 text-barro" /> Datos Personales</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-serif font-bold text-gray-900 flex items-center gap-2"><User className="w-6 h-6 text-barro" /> Datos Personales</h2>
+                {!isEditing && (
+                  <button 
+                    onClick={handleStartEditing}
+                    className="flex items-center gap-2 bg-barro text-white px-4 py-2 rounded-lg font-medium hover:bg-cochinilla transition-colors text-sm shadow-sm"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Modificar Datos
+                  </button>
+                )}
+              </div>
               <p className="text-gray-500 mb-6">Aquí puedes actualizar tu foto de perfil y tu información básica.</p>
               
+              {/* Mensajes de feedback */}
+              {editError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-medium">
+                  {editError}
+                </div>
+              )}
+              {editSuccess && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-medium">
+                  {editSuccess}
+                </div>
+              )}
+
               {/* Formulario mock - Subida de Avatar Real */}
               <div className="flex items-center gap-6 mb-8">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center border border-dashed border-gray-300 overflow-hidden relative group">
@@ -121,37 +231,275 @@ function ClientProfile() {
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Nombre Completo</label>
-                  <input type="text" readOnly defaultValue={user?.name} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+
+              {isEditing ? (
+                /* === MODO EDICIÓN === */
+                <>
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Nombre Completo</label>
+                      <input 
+                        type="text" 
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
+                      <input 
+                        type="email" 
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Edad</label>
+                      <input 
+                        type="number" 
+                        value={editForm.age}
+                        onChange={(e) => setEditForm({...editForm, age: e.target.value})}
+                        placeholder="Ej: 25"
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Rol de Cuenta</label>
+                      <input type="text" readOnly value={user?.role} className="px-4 py-2.5 border border-gray-200 bg-gray-100 text-gray-500 rounded-lg w-full outline-none capitalize cursor-not-allowed" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Municipio</label>
+                      <input 
+                        type="text" 
+                        value={editForm.municipio}
+                        onChange={(e) => setEditForm({...editForm, municipio: e.target.value})}
+                        placeholder="Ej: Oaxaca de Juárez"
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Barrio</label>
+                      <input 
+                        type="text" 
+                        value={editForm.barrio}
+                        onChange={(e) => setEditForm({...editForm, barrio: e.target.value})}
+                        placeholder="Ej: Centro"
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={handleSaveProfile}
+                      disabled={saving}
+                      className="flex items-center gap-2 bg-barro text-white px-6 py-2.5 rounded-lg font-medium hover:bg-cochinilla transition-colors shadow-sm disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4" />
+                      {saving ? 'Guardando...' : 'Guardar Cambios'}
+                    </button>
+                    <button 
+                      onClick={handleCancelEditing}
+                      disabled={saving}
+                      className="flex items-center gap-2 bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                /* === MODO LECTURA === */
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Nombre Completo</label>
+                    <input type="text" readOnly defaultValue={user?.name} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
+                    <input type="email" readOnly defaultValue={user?.email} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Edad</label>
+                    <input type="text" readOnly defaultValue={user?.age ? `${user.age} años` : "No especificada"} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Rol de Cuenta</label>
+                    <input type="text" readOnly defaultValue={user?.role} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none capitalize" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Municipio</label>
+                    <input type="text" readOnly defaultValue={user?.municipio || "No especificado"} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Barrio</label>
+                    <input type="text" readOnly defaultValue={user?.barrio || "No especificado"} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Correo Electrónico</label>
-                  <input type="email" readOnly defaultValue={user?.email} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Edad</label>
-                  <input type="text" readOnly defaultValue={user?.age ? `${user.age} años` : "No especificada"} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Rol de Cuenta</label>
-                  <input type="text" readOnly defaultValue={user?.role} className="px-4 py-2.5 border border-gray-200 bg-gray-50 text-gray-700 rounded-lg w-full outline-none capitalize" />
-                </div>
-              </div>
+              )}
             </div>
           )}
 
           {activeSection === 'address' && (
             <div>
               <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6 flex items-center gap-2"><MapPin className="w-6 h-6 text-barro" /> Mis Direcciones</h2>
-              <div className="border border-gray-200 p-4 rounded-lg mb-4">
-                <p className="font-medium">Dirección de Registro</p>
-                <p className="text-sm text-gray-600">
-                  {user?.municipio && user?.barrio ? `${user.municipio}, ${user.barrio} (Valles Centrales)` : "No se ha registrado ninguna dirección."}
-                </p>
-              </div>
-              <button className="text-barro font-medium hover:underline">+ Añadir nueva dirección</button>
+              
+              {/* Dirección de registro (del perfil de usuario) */}
+              {(user?.estado || user?.municipio || user?.barrio) && (
+                <div className="border border-gray-200 p-4 rounded-lg mb-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-0.5 rounded">Registro</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {[user?.barrio, user?.municipio, user?.estado].filter(Boolean).join(', ')}
+                  </p>
+                </div>
+              )}
+
+              {/* Direcciones guardadas */}
+              {loadingAddresses ? (
+                <div className="text-sm text-gray-400 mb-4">Cargando direcciones...</div>
+              ) : (
+                addresses.map(addr => (
+                  <div key={addr.id} className="border border-gray-200 p-4 rounded-lg mb-3 flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-barro/10 text-barro text-xs font-semibold px-2 py-0.5 rounded">{addr.label}</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {[addr.barrio, addr.municipio, addr.estado].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await apiFetch(`/api/auth/addresses/${addr.id}`, { method: 'DELETE' });
+                          setAddresses(prev => prev.filter(a => a.id !== addr.id));
+                        } catch (err) {
+                          alert('Error al eliminar: ' + (err.message || err));
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-700 text-xs font-semibold ml-4 flex-shrink-0"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ))
+              )}
+
+              {/* Botón / Formulario para nueva dirección */}
+              {!isEditingAddress ? (
+                <button 
+                  onClick={() => {
+                    setAddressForm({ label: 'Casa', estado: '', municipio: '', barrio: '' });
+                    setAddressError('');
+                    setAddressSuccess('');
+                    setIsEditingAddress(true);
+                  }}
+                  className="flex items-center gap-2 text-barro font-medium hover:underline mt-2"
+                >
+                  + Añadir nueva dirección
+                </button>
+              ) : (
+                <div className="border border-barro/20 bg-barro/5 p-5 rounded-xl mt-4">
+                  <h3 className="font-semibold text-gray-900 mb-4">Nueva Dirección</h3>
+                  
+                  {addressError && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-medium">
+                      {addressError}
+                    </div>
+                  )}
+                  {addressSuccess && (
+                    <div className="mb-3 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-medium">
+                      {addressSuccess}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Etiqueta</label>
+                      <select
+                        value={addressForm.label}
+                        onChange={(e) => setAddressForm({...addressForm, label: e.target.value})}
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      >
+                        <option value="Casa">Casa</option>
+                        <option value="Trabajo">Trabajo</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Estado</label>
+                      <select
+                        value={addressForm.estado}
+                        onChange={(e) => setAddressForm({...addressForm, estado: e.target.value})}
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      >
+                        <option value="">Selecciona un estado</option>
+                        {mexicanStates.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Municipio</label>
+                      <input 
+                        type="text"
+                        value={addressForm.municipio}
+                        onChange={(e) => setAddressForm({...addressForm, municipio: e.target.value})}
+                        placeholder="Ej: Oaxaca de Juárez"
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Barrio / Colonia</label>
+                      <input 
+                        type="text"
+                        value={addressForm.barrio}
+                        onChange={(e) => setAddressForm({...addressForm, barrio: e.target.value})}
+                        placeholder="Ej: Centro"
+                        className="px-4 py-2.5 border border-barro/30 bg-white text-gray-900 rounded-lg w-full outline-none focus:ring-2 focus:ring-barro/20 focus:border-barro transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={async () => {
+                        setSavingAddress(true);
+                        setAddressError('');
+                        setAddressSuccess('');
+                        try {
+                          await apiFetch('/api/auth/addresses', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(addressForm)
+                          });
+                          await fetchAddresses();
+                          setAddressSuccess('Dirección agregada correctamente');
+                          setIsEditingAddress(false);
+                        } catch (err) {
+                          setAddressError(err.message || 'Error al guardar la dirección');
+                        } finally {
+                          setSavingAddress(false);
+                        }
+                      }}
+                      disabled={savingAddress}
+                      className="flex items-center gap-2 bg-barro text-white px-5 py-2 rounded-lg font-medium hover:bg-cochinilla transition-colors shadow-sm disabled:opacity-50 text-sm"
+                    >
+                      <Save className="w-4 h-4" />
+                      {savingAddress ? 'Guardando...' : 'Guardar Dirección'}
+                    </button>
+                    <button 
+                      onClick={() => { setIsEditingAddress(false); setAddressError(''); }}
+                      disabled={savingAddress}
+                      className="flex items-center gap-2 bg-gray-100 text-gray-700 px-5 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -20,6 +20,22 @@ export const getProductImageUrl = (imageName) => {
   if (imageName.startsWith("http://") || imageName.startsWith("https://")) {
     return imageName;
   }
+
+  // Comprobar si es un activo estático de la demostración
+  const isStaticAsset = [
+    'valles1.jpg', 'valles2.jpg', 'valles3.jpg', 
+    'istmo1.jpg', 'istmo2.jpg', 'istmo3.jpg', 
+    'mixteca1.jpg', 'mixteca2.jpg', 'mixteca3.jpg', 
+    'costa1.jpg', 'costa2.jpg', 'costa3.jpg', 
+    'papaloapan1.jpg', 'papaloapan2.jpg', 'papaloapan3.jpg', 
+    'canada1.jpg', 'canada2.jpg', 'canada3.jpg'
+  ].includes(imageName);
+
+  if (!isStaticAsset) {
+    // Si la imagen es subida dinámicamente por un artesano, se sirve desde el backend
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    return `${baseUrl}/uploads/${imageName}`;
+  }
   
   try {
     // Resuelve dinámicamente la ruta física de los activos locales compilados de Vite
