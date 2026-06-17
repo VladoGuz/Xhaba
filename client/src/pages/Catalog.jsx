@@ -47,7 +47,9 @@ function Catalog() {
     const fetchProducts = async () => {
       try {
         const data = await productService.getProductsWithVariants();
-        setProducts(data);
+        // Filtrar productos agotados para que no se muestren en el catálogo
+        const inStockData = data.filter(product => product.variants && product.variants.length > 0 && product.variants.some(v => v.stock > 0));
+        setProducts(inStockData);
         setLoading(false);
       } catch (err) {
         console.error("Error al cargar productos en catálogo:", err);

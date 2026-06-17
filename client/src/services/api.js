@@ -18,7 +18,12 @@ export class ApiError extends Error {
 }
 
 /**
+ * 🎓 GUÍA PARA ESTUDIANTES: api.js
+ * 
  * apiFetch
+ * 
+ * En Javascript moderno, para pedir información a otro servidor de internet usamos la función nativa `fetch`.
+ * Pero escribir lo mismo una y otra vez es aburrido. Por eso creamos nuestra propia función envoltura `apiFetch`.
  * 
  * Wrapper utilitario sobre el método nativo window.fetch de JavaScript.
  * Estandariza la comunicación con la APIREST del backend de Xhaba:
@@ -57,6 +62,8 @@ export const apiFetch = async (endpoint, options = {}) => {
     delete finalOptions.headers["Content-Type"];
   }
 
+  // `await` significa: "Pausa el código aquí hasta que el servidor nos conteste".
+  // Recuerda: las peticiones a la red toman tiempo (milisegundos o segundos).
   const response = await fetch(url, finalOptions);
 
   // Manejo centralizado de respuestas HTTP no exitosas (códigos 4xx y 5xx)

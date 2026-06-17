@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, AlertCircle, Loader, Image as ImageIcon, Upload } from 'lucide-react';
+import { Save, AlertCircle, Loader, Image as ImageIcon, Upload, Edit } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
+import EditProductModal from './EditProductModal';
 
 /**
  * Componente InventoryList (Inventario del Artesano).
@@ -14,6 +16,7 @@ function InventoryList() {
   
   const fileInputRef = useRef(null);
   const [uploadingImageId, setUploadingImageId] = useState(null);
+  const [editingProductId, setEditingProductId] = useState(null);
 
   const fetchInventory = async () => {
     if (!user || !user.artisan_id) {
@@ -135,7 +138,7 @@ function InventoryList() {
               <th className="p-4 font-medium">Precio</th>
               <th className="p-4 font-medium">Stock Actual</th>
               <th className="p-4 font-medium">Foto</th>
-              <th className="p-4 font-medium">Acción</th>
+              <th className="p-4 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -145,8 +148,18 @@ function InventoryList() {
               </tr>
             ) : (
               inventory.map((item) => (
-                <tr key={item.variant_id || item.product_id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4 font-medium text-gray-900">{item.title}</td>
+                <tr key={item.variant_id || item.product_id} className={`transition-colors ${Number(item.stock) === 0 ? 'bg-red-50/50 hover:bg-red-50' : 'hover:bg-gray-50'}`}>
+                  <td className="p-4 font-medium text-gray-900">
+                    <Link to={`/product/${item.product_id}`} className="hover:text-cempasuchil hover:underline transition-colors">
+                      {item.title}
+                    </Link>
+                    {Number(item.stock) === 0 && (
+                      <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                        <AlertCircle className="w-3 h-3" />
+                        Agotado
+                      </span>
+                    )}
+                  </td>
                   <td className="p-4 text-gray-600">
                     {item.color || "Liso"} / {item.size || "Única"}
                   </td>
@@ -156,7 +169,7 @@ function InventoryList() {
                       type="number" 
                       value={item.stock || 0} 
                       onChange={(e) => handleStockChange(item.variant_id, e.target.value)}
-                      className="w-20 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-barro outline-none"
+                      className={`w-20 px-3 py-1 border rounded focus:ring-2 focus:ring-barro outline-none ${Number(item.stock) === 0 ? 'border-red-300 bg-red-50 text-red-900' : 'border-gray-300'}`}
                       min="0"
                     />
                   </td>
@@ -170,12 +183,18 @@ function InventoryList() {
                       {uploadingImageId === item.product_id ? <Loader className="w-3 h-3 animate-spin" /> : "Cambiar Foto"}
                     </button>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 flex flex-col gap-2">
                     <button 
                       onClick={() => handleSave(item)}
-                      className="flex items-center gap-1 text-sm text-white bg-green-600 px-3 py-1.5 rounded hover:bg-green-700 transition-colors"
+                      className="flex items-center justify-center gap-1 text-sm text-white bg-green-600 px-3 py-1.5 rounded hover:bg-green-700 transition-colors w-full"
                     >
-                      <Save className="w-4 h-4" /> Guardar
+                      <Save className="w-4 h-4" /> Stock
+                    </button>
+                    <button 
+                      onClick={() => setEditingProductId(item.product_id)}
+                      className="flex items-center justify-center gap-1 text-sm text-white bg-barro px-3 py-1.5 rounded hover:bg-cochinilla transition-colors w-full"
+                    >
+                      <Edit className="w-4 h-4" /> Detalles
                     </button>
                   </td>
                 </tr>
@@ -184,6 +203,17 @@ function InventoryList() {
           </tbody>
         </table>
       </div>
+      
+      {editingProductId && (
+        <EditProductModal 
+          productId={editingProductId} 
+          onClose={() => setEditingProductId(null)} 
+          onSave={() => {
+            setEditingProductId(null);
+            fetchInventory();
+          }} 
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { getProductImageUrl } from '../utils/imageHelper';
@@ -17,7 +17,7 @@ import { formatMXN } from '../utils/formatCurrency';
  * Resuelve las fotos de los productos de forma dinámica llamando a `getProductImageUrl`.
  */
 function Cart() {
-  const { cartItems, removeFromCart, total } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, total } = useCart();
   const navigate = useNavigate();
 
   return (
@@ -47,15 +47,43 @@ function Cart() {
               {cartItems.map((item) => (
                 <li key={item.id} className="p-6 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    {/* Renderiza la imagen dinámica empaquetada */}
-                    <img 
-                      src={getProductImageUrl(item.image)} 
-                      alt={item.title} 
-                      className="w-20 h-20 object-cover rounded-lg border border-gray-200"
-                    />
+                    {/* Renderiza la imagen dinámica empaquetada con enlace */}
+                    <Link to={`/product/${item.productId || item.id}`} className="shrink-0">
+                      <img 
+                        src={getProductImageUrl(item.image)} 
+                        alt={item.title} 
+                        className="w-20 h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
+                      />
+                    </Link>
                     <div>
-                      <h3 className="font-medium text-lg text-gray-900">{item.title}</h3>
-                      <p className="text-gray-500">Cantidad: {item.quantity}</p>
+                      <Link to={`/product/${item.productId || item.id}`}>
+                        <h3 className="font-medium text-lg text-gray-900 hover:text-cempasuchil transition-colors">{item.title}</h3>
+                      </Link>
+                      <div className="flex items-center gap-3 mt-1 mb-1">
+                        <p className="text-gray-500 text-sm">Cantidad:</p>
+                        <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200">
+                          <button 
+                            onClick={() => updateQuantity(item.id, -1)}
+                            disabled={item.quantity <= 1}
+                            className="px-3 py-1 text-gray-500 hover:text-barro disabled:opacity-50 transition-colors font-bold"
+                            title="Disminuir cantidad"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 font-medium text-gray-900 w-8 text-center text-sm">{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(item.id, 1)}
+                            disabled={item.stock !== undefined && item.quantity >= item.stock}
+                            className="px-3 py-1 text-gray-500 hover:text-barro disabled:opacity-50 transition-colors font-bold"
+                            title="Aumentar cantidad"
+                          >
+                            +
+                          </button>
+                        </div>
+                        {item.stock !== undefined && (
+                          <span className="text-xs text-emerald-600 font-medium">({item.stock} disp.)</span>
+                        )}
+                      </div>
                       <p className="text-barro font-semibold">{formatMXN(item.price)}</p>
                     </div>
                   </div>

@@ -29,8 +29,15 @@ import { errorHandler } from "./src/middlewares/errorHandler.js";
 const app = express();
 
 /**
+ * 🎓 GUÍA PARA ESTUDIANTES: index.js (El Servidor)
+ * 
+ * Este archivo es el punto de entrada de nuestro Backend. Es el programa que "escucha" peticiones 24/7.
+ * Express es la librería de Node.js que nos hace la vida muy fácil para crear servidores web.
+ * 
  * Configuración de CORS (Cross-Origin Resource Sharing) dinámico.
- * Permite la comunicación del frontend desde la URL declarada en config.clientUrl.
+ * Por seguridad, los navegadores bloquean peticiones entre diferentes dominios (ej. el puerto 5173 intentando 
+ * hablar con el puerto 5000). CORS es el permiso explícito que da el servidor para decir "Sí, confío en mi frontend".
+ * 
  * Es sumamente importante habilitar 'credentials: true' para permitir el envío automático
  * de la cookie 'xhaba_session' que maneja el estado de sesión HTTPOnly.
  */
@@ -40,8 +47,9 @@ app.use(cors({
 }));
 
 // Middlewares globales de parsing de Express
-app.use(express.json()); // Analiza el cuerpo (body) de las peticiones entrantes con formato JSON
-app.use(cookieParser()); // Analiza las cookies adjuntas en las cabeceras HTTP y las inyecta en req.cookies
+// 🎓 Piensa en los Middlewares como "porteros" o "traductores" que procesan la petición antes de que llegue a nuestras rutas.
+app.use(express.json()); // Traduce el cuerpo (body) de las peticiones entrantes a un objeto JSON usable en Javascript.
+app.use(cookieParser()); // Traduce las cookies que vienen en la petición (ej. el token de sesión) a un formato fácil de leer en req.cookies.
 
 // Servir estáticamente los archivos subidos (fotos de prendas)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

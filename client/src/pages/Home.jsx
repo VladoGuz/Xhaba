@@ -13,7 +13,9 @@ function Home() {
     const fetchHomeProducts = async () => {
       try {
         const data = await productService.getProductsWithVariants();
-        setProducts(data);
+        // Filtrar productos agotados para no mostrarlos en la página de inicio
+        const inStockData = data.filter(product => product.variants && product.variants.length > 0 && product.variants.some(v => v.stock > 0));
+        setProducts(inStockData);
         setLoading(false);
       } catch (err) {
         console.error("Error al obtener productos para Home:", err);

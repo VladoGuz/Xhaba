@@ -24,13 +24,23 @@ function ProductCard({ id, title, price, artisan, image, isUnique }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleBuyClick = () => {
+  const handleAddToCart = () => {
+    if (!user || user.role !== 'client') {
+      alert('Debes iniciar sesión como cliente para poder agregar al carrito.');
+      navigate('/login');
+      return;
+    }
+    addToCart({ id, title, price, artisan, image, isUnique });
+  };
+
+  const handleBuyNow = () => {
     if (!user || user.role !== 'client') {
       alert('Debes iniciar sesión como cliente para poder comprar.');
       navigate('/login');
       return;
     }
     addToCart({ id, title, price, artisan, image, isUnique });
+    navigate('/cart');
   };
 
   return (
@@ -59,17 +69,25 @@ function ProductCard({ id, title, price, artisan, image, isUnique }) {
           Por: <span className="text-cochinilla font-medium">{artisan}</span>
         </p>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-orange-100">
+        <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-orange-100">
           <span className="text-xl font-black text-gray-900">
             {formatMXN(price)}
           </span>
-          <button 
-            onClick={handleBuyClick}
-            className="flex items-center gap-2 bg-gradient-to-r from-cempasuchil to-cochinilla text-white px-5 py-2.5 rounded-xl font-bold hover:shadow-lg hover:scale-105 active:scale-95 transition-all"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            Comprar
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleAddToCart}
+              className="flex items-center justify-center bg-white text-cochinilla border-2 border-cochinilla p-2.5 rounded-xl hover:bg-rose-50 hover:scale-105 active:scale-95 transition-all"
+              title="Agregar al carrito"
+            >
+              <ShoppingCart className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={handleBuyNow}
+              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-cempasuchil to-cochinilla text-white px-5 py-2.5 rounded-xl font-bold hover:shadow-lg hover:scale-105 active:scale-95 transition-all"
+            >
+              Comprar
+            </button>
+          </div>
         </div>
       </div>
     </div>

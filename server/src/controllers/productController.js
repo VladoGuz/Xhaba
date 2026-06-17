@@ -2,6 +2,12 @@ import pool from "../config/db.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 /**
+ * 🎓 GUÍA PARA ESTUDIANTES: productController.js
+ * 
+ * Los "Controladores" son los cerebros de la operación. 
+ * Mientras que las "Rutas" solo contestan el teléfono, los controladores hacen el trabajo pesado: 
+ * van a la base de datos, validan la información, y construyen el formato JSON de respuesta.
+ * 
  * Obtiene la lista completa de prendas de vestir aprobadas con sus variantes e imágenes.
  * 
  * @route   GET /api/products
@@ -11,6 +17,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
  * @access  Público
  */
 export const getProductsWithVariants = asyncHandler(async (req, res) => {
+  // 🎓 NOTA ESTUDIANTIL: Las consultas SQL a veces parecen intimidantes.
+  // Aquí usamos 'json_agg' de PostgreSQL. Esto permite meter toda la información de "Tallas y Colores" (Variantes)
+  // directamente dentro del mismo objeto de Producto, en vez de tener que hacer múltiples consultas separadas.
+  // Es como pedir "tráeme el menú con todas las guarniciones incluidas de una sola vez".
   const query = `
     SELECT 
       p.id AS product_id,
@@ -141,6 +151,11 @@ export const createProduct = asyncHandler(async (req, res) => {
     VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING id, title, category, base_price
   `;
+  // 🎓 NOTA ESTUDIANTIL SOBRE SEGURIDAD (Inyección SQL):
+  // Fíjate cómo usamos `$1, $2, $3...` en el texto de la consulta, y pasamos los valores reales en un arreglo `[]` aparte.
+  // ¡NUNCA concatenes los textos del usuario directamente en el string SQL! (Ej: `VALUES (${title})`). 
+  // Si lo haces, un usuario malintencionado podría borrarte toda la base de datos (SQL Injection).
+  // La librería `pg` que usamos aquí protege automáticamente la base de datos si usamos este formato con el símbolo de dólar.
   const productRes = await pool.query(productQuery, [
     artisanId,
     title.trim(),
@@ -240,4 +255,60 @@ export const updateProductImage = asyncHandler(async (req, res) => {
   }
 
   res.json({ message: "Imagen actualizada correctamente", image_name: req.file.filename });
+});
+
+/**
+ * Actualiza la información general de una prenda de vestir.
+ * 
+ * @route   PUT /api/products/:id
+ * @desc    Actualiza título, descripción, técnica, material, categoría y precio.
+ * @access  Privado (Artesano propietario)
+ */
+export const updateProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const artisanId = req.user.artisan_id;
+  const { title, description, technique, material, category, base_price } = req.body;
+
+  if (!artisanId) {
+    const err = new Error("No tienes un perfil de artesano registrado para editar prendas");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  if (!title || !technique || !material || !category || !base_price) {
+    const err = new Error("Los campos título, técnica, material, categoría y precio son obligatorios");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Verificar propiedad
+  const checkRes = await pool.query("SELECT id FROM products WHERE id = $1 AND artisan_id = $2", [id, artisanId]);
+  if (checkRes.rows.length === 0) {
+    const err = new Error("No tienes permiso para editar esta prenda o no existe");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  // Actualizar
+  const updateQuery = `
+    UPDATE products 
+    SET title = $1, description = $2, technique = $3, material = $4, category = $5, base_price = $6
+    WHERE id = $7 AND artisan_id = $8
+    RETURNING id, title, category, base_price
+  `;
+  const result = await pool.query(updateQuery, [
+    title.trim(),
+    description ? description.trim() : null,
+    technique.trim(),
+    material.trim(),
+    category.trim(),
+    parseFloat(base_price),
+    id,
+    artisanId
+  ]);
+
+  res.json({
+    message: "Prenda actualizada con éxito",
+    product: result.rows[0]
+  });
 });

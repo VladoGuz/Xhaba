@@ -24,14 +24,19 @@ import ArtisanDashboard from './pages/ArtisanDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
 /**
+ * 🎓 GUÍA PARA ESTUDIANTES: App.jsx
+ * 
  * Componente Raíz de la Interfaz (App).
+ * Imagina que este archivo es el "índice" o el "mapa" de tu sitio web. 
+ * Aquí le decimos a React qué pantalla mostrar dependiendo de la URL (el link) en la que esté el usuario.
  * 
- * Define la estructura general de la página (Layout) que mantiene fijos la barra
- * de navegación (Navbar) y el pie de página (Footer). 
- * 
- * Implementa el árbol de enrutamiento del lado del cliente utilizando React Router DOM,
- * protegiendo las vistas de clientes, artesanos y administradores a través del
- * envoltorio condicional 'ProtectedRoute'.
+ * Conceptos Clave aquí:
+ * 1. <Routes> y <Route>: Vienen de 'react-router-dom'. Son las reglas de navegación. Si la URL dice "/login", 
+ *    muestra el componente <Login />.
+ * 2. <Navbar> y <Footer>: Nota cómo están FUERA de <Routes>. Esto significa que SIEMPRE se van a mostrar 
+ *    (en todas las pantallas de la página), como el menú principal de un restaurante.
+ * 3. <ProtectedRoute>: Es un componente "guardia de seguridad". Revisa si el usuario tiene permiso (está logueado) 
+ *    antes de dejarlo entrar a ciertas páginas, como el "dashboard".
  */
 function App() {
   return (

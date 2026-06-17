@@ -36,6 +36,8 @@ function ProductDetail() {
 
   // Efecto: Carga la prenda y establece la variante inicial por defecto
   useEffect(() => {
+    window.scrollTo(0, 0); // Scrollear al inicio al cargar el detalle del producto
+
     const fetchProduct = async () => {
       try {
         const data = await productService.getProductById(id);
@@ -77,7 +79,7 @@ function ProductDetail() {
         <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-rose-100 shadow-sm text-center">
           <h2 className="text-2xl font-serif font-black text-gray-900 mb-3">Prenda Inexistente</h2>
           <p className="text-gray-500 mb-6 font-medium">{error || "Lo sentimos, el producto no fue encontrado."}</p>
-          <button 
+          <button
             onClick={() => navigate('/catalog')}
             className="bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white font-bold px-6 py-2.5 rounded-xl hover:shadow-lg transition-all"
           >
@@ -129,6 +131,7 @@ function ProductDetail() {
       image: product.images && product.images[0] ? product.images[0] : 'valles1.jpg',
       color: selectedColor,
       size: selectedSize,
+      stock: currentVariant.stock,
     });
 
     // Muestra alerta verde flotante y la apaga tras 4 segundos
@@ -136,14 +139,41 @@ function ProductDetail() {
     setTimeout(() => setAddedAlert(false), 4000);
   };
 
+  const handleBuyNowClick = () => {
+    if (!user || user.role !== 'client') {
+      alert('Debes iniciar sesión como cliente para poder realizar compras.');
+      navigate('/login');
+      return;
+    }
+
+    if (!selectedColor || !selectedSize) {
+      alert('Por favor selecciona un color y una talla antes de comprar.');
+      return;
+    }
+
+    addToCart({
+      id: currentVariant.variant_id || product.product_id,
+      productId: product.product_id,
+      title: `${product.title} (${selectedColor} - ${selectedSize})`,
+      price: product.base_price,
+      artisan: `${product.artisan_name} (${product.artisan_community})`,
+      image: product.images && product.images[0] ? product.images[0] : 'valles1.jpg',
+      color: selectedColor,
+      size: selectedSize,
+      stock: currentVariant.stock,
+    });
+
+    navigate('/cart');
+  };
+
   return (
     <main className="min-h-screen bg-manta py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        
+
         {/* Migas de pan y navegación retrospectiva */}
         <div className="flex items-center gap-2 mb-8">
-          <Link 
-            to="/catalog" 
+          <Link
+            to="/catalog"
             className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-fuchsia-600 transition-colors bg-white px-3 py-1.5 rounded-full border border-gray-100 shadow-sm"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -165,7 +195,7 @@ function ProductDetail() {
                 <p className="text-xs text-emerald-100">Has reservado temporalmente esta obra de arte textil.</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => navigate('/cart')}
               className="bg-white text-emerald-700 font-bold text-xs uppercase px-5 py-2.5 rounded-xl hover:bg-emerald-50 transition-colors shadow"
             >
@@ -177,16 +207,16 @@ function ProductDetail() {
         {/* FICHA TÉCNICA PRINCIPAL DE LA PRENDA */}
         <section className="bg-white rounded-3xl border border-pink-100/50 shadow-sm overflow-hidden mb-12">
           <div className="grid grid-cols-1 lg:grid-cols-2">
-            
+
             {/* COLUMNA IZQUIERDA: VISUALIZADOR DE IMAGEN CON HELPER VITE */}
             <div className="p-6 md:p-8 bg-gradient-to-br from-pink-50/20 to-white flex flex-col justify-center relative border-b lg:border-b-0 lg:border-r border-gray-100">
               <div className="relative rounded-2xl overflow-hidden shadow-inner aspect-square max-h-[500px] mx-auto w-full group">
-                <img 
-                  src={getProductImageUrl(product.images && product.images[0])} 
-                  alt={product.title} 
+                <img
+                  src={getProductImageUrl(product.images && product.images[0])}
+                  alt={product.title}
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                 />
-                
+
                 {/* Badges Flotantes Informativos */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                   <span className="bg-gradient-to-r from-cempasuchil to-cochinilla text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md flex items-center gap-1.5 animate-gradient-x">
@@ -206,7 +236,7 @@ function ProductDetail() {
             {/* COLUMNA DERECHA: CONFIGURADOR DE PRENDA (TALLAS, COLORES Y METADATOS) */}
             <div className="p-8 md:p-12 flex flex-col justify-between">
               <div>
-                
+
                 {/* Categoría y Título */}
                 <span className="text-xs uppercase font-bold tracking-widest text-cempasuchil mb-2 inline-block">
                   {product.category}
@@ -220,9 +250,15 @@ function ProductDetail() {
                   Elaborado por la artesana: <span className="text-cochinilla font-bold">{product.artisan_name}</span> en la comunidad zapoteca de <span className="text-gray-700 font-semibold">{product.artisan_community}</span>.
                 </p>
 
-                {/* Precio Base */}
-                <div className="pb-6 border-b border-gray-100 mb-6">
+                {/* Precio Base y Stock Disponible */}
+                <div className="pb-6 border-b border-gray-100 mb-6 flex items-center justify-between">
                   <span className="text-4xl font-black text-gray-900">{formatMXN(product.base_price)}</span>
+
+                  {!isOutOfStock && currentVariant && (
+                    <div className={`text-sm font-bold px-4 py-2 rounded-xl border ${currentVariant.stock > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                      {currentVariant.stock > 0 ? `Stock disponible: ${currentVariant.stock} pieza${currentVariant.stock !== 1 ? 's' : ''}` : 'Agotado'}
+                    </div>
+                  )}
                 </div>
 
                 {/* Ficha de Metadatos de la Prenda */}
@@ -240,7 +276,7 @@ function ProductDetail() {
                 {/* SELECTORES DE VARIANTES REACTIVAS */}
                 {!isOutOfStock ? (
                   <div className="space-y-6 mb-8">
-                    
+
                     {/* Selector de Color de Manta */}
                     {availableColors.length > 0 && (
                       <div>
@@ -253,7 +289,7 @@ function ProductDetail() {
                                 setSelectedColor(color);
                                 // Selecciona automáticamente la primera talla del color recién elegido
                                 const matchingSizes = product.variants.filter(v => v.color === color);
-                                const availableSize = matchingSizes.find(s => s.stock > 0) || matchingSizes[0];
+
                                 setSelectedSize(availableSize.size);
                               }}
                               className={`px-4.5 py-2.5 rounded-xl text-sm font-bold border transition-all ${selectedColor === color ? 'bg-cempasuchil border-cempasuchil text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'}`}
@@ -278,9 +314,6 @@ function ProductDetail() {
                               className={`px-4.5 py-2.5 rounded-xl text-sm font-bold border transition-all flex flex-col items-center justify-center min-w-[70px] ${variant.stock === 0 ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed line-through' : selectedSize === variant.size ? 'bg-cochinilla border-cochinilla text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'}`}
                             >
                               <span>{variant.size}</span>
-                              <span className={`text-[9px] mt-0.5 ${variant.stock === 0 ? 'text-gray-300' : selectedSize === variant.size ? 'text-rose-100' : 'text-gray-400'}`}>
-                                {variant.stock > 0 ? `${variant.stock} disp.` : 'Agotado'}
-                              </span>
                             </button>
                           ))}
                         </div>
@@ -312,21 +345,32 @@ function ProductDetail() {
 
               </div>
 
-              {/* ACCIÓN DE AGREGAR A LA BOLSA */}
-              <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
+              {/* ACCIÓN DE AGREGAR A LA BOLSA Y COMPRAR */}
+              <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleAddToCartClick}
                   disabled={isOutOfStock || isCurrentVariantOutOfStock}
-                  className="flex-grow flex items-center justify-center gap-2.5 bg-gradient-to-r from-cempasuchil to-cochinilla text-white font-extrabold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all"
+                  className="flex-1 flex items-center justify-center gap-2.5 bg-white text-cempasuchil border-2 border-cempasuchil font-extrabold py-4 px-4 rounded-2xl hover:bg-orange-50 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all"
+                  title="Añadir a la bolsa"
                 >
                   <ShoppingBag className="w-5 h-5" />
-                  <span>
-                    {isOutOfStock ? 'Agotado por Completo' : isCurrentVariantOutOfStock ? 'Variante Agotada' : 'Añadir a la Bolsa'}
+                  <span className="hidden sm:inline">
+                    {isOutOfStock ? 'Agotado' : isCurrentVariantOutOfStock ? 'Agotado' : 'Añadir'}
                   </span>
                 </button>
-                
-                <button 
-                  className="p-4 border border-gray-200 rounded-2xl text-gray-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50 transition-colors shadow-sm"
+
+                <button
+                  onClick={handleBuyNowClick}
+                  disabled={isOutOfStock || isCurrentVariantOutOfStock}
+                  className="flex-[2] flex items-center justify-center gap-2.5 bg-gradient-to-r from-cempasuchil to-cochinilla text-white font-extrabold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all"
+                >
+                  <span>
+                    {isOutOfStock ? 'Agotado por Completo' : isCurrentVariantOutOfStock ? 'Variante Agotada' : 'Comprar Ahora'}
+                  </span>
+                </button>
+
+                <button
+                  className="p-4 border border-gray-200 rounded-2xl text-gray-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50 transition-colors shadow-sm flex-shrink-0"
                   title="Guardar en favoritos"
                 >
                   <Heart className="w-6 h-6" />

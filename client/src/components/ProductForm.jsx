@@ -10,7 +10,7 @@ function ProductForm() {
   const [formData, setFormData] = useState({
     category: 'Huipiles',
     title: '',
-    size_label: '',
+    size_label: 'Unitalla',
     base_price: '',
     stock: '',
     description: '',
@@ -64,7 +64,7 @@ function ProductForm() {
       setFormData({
         category: 'Huipiles',
         title: '',
-        size_label: '',
+        size_label: 'Unitalla',
         base_price: '',
         stock: '',
         description: '',
@@ -139,16 +139,18 @@ function ProductForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Talla</label>
-            <input 
-              required 
-              type="text" 
+            <select 
               name="size_label" 
-              value={formData.size_label}
-              placeholder="Ej: Unitalla, M, G" 
+              value={formData.size_label} 
               onChange={handleChange}
               disabled={loading}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none transition-all text-gray-700" 
-            />
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-barro focus:border-transparent outline-none bg-white transition-all text-gray-700"
+            >
+              <option>Unitalla</option>
+              <option>Chica</option>
+              <option>Mediana</option>
+              <option>Grande</option>
+            </select>
           </div>
         </div>
 

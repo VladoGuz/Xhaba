@@ -24,6 +24,9 @@ function Login() {
 
   // Redirección reactiva de seguridad: Si ya hay sesión activa, impide volver a loguearse
   if (user) {
+    if (user.role === 'artisan') {
+      return <Navigate to="/dashboard" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 
@@ -36,9 +39,13 @@ function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      // Redirige al Home al autenticarse con éxito
-      navigate('/');
+      const loggedInUser = await login(email, password);
+      // Redirige al Dashboard de Artesano o al Home dependiendo del rol
+      if (loggedInUser.role === 'artisan') {
+        navigate('/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error(err);
       setError(err.message || 'Credenciales incorrectas. Intente nuevamente.');
@@ -58,8 +65,12 @@ function Login() {
     setError(null);
     setLoading(true);
     try {
-      await login(demoEmail, demoPassword);
-      navigate('/');
+      const loggedInUser = await login(demoEmail, demoPassword);
+      if (loggedInUser.role === 'artisan') {
+        navigate('/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error(err);
       setError('Error al iniciar sesión con la cuenta demo. Asegúrese de que el servidor esté encendido.');
@@ -73,7 +84,7 @@ function Login() {
       <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-100">
         <h2 className="text-3xl font-serif font-bold text-barro text-center mb-2">Iniciar Sesión</h2>
         <p className="text-gray-500 text-center mb-8">Ingresa a tu cuenta de Xhaba</p>
-        
+
         {/* Renderiza alerta roja de error de credenciales o de red */}
         {error && (
           <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md flex items-start gap-3 shadow-sm">
@@ -86,30 +97,30 @@ function Login() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input 
-              type="email" 
+            <input
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Correo Electrónico" 
+              placeholder="Correo Electrónico"
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none transition-all"
             />
           </div>
 
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input 
-              type="password" 
+            <input
+              type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Contraseña" 
+              placeholder="Contraseña"
               className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-grana focus:border-transparent outline-none transition-all"
             />
           </div>
 
           {/* Botón de envío dinámico */}
-          <button 
+          <button
             type="submit"
             disabled={loading}
             className="w-full bg-grana text-white py-3 rounded-lg font-medium hover:bg-grana-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -137,7 +148,7 @@ function Login() {
 
         {/* Botones de simulación / acceso rápido de testing */}
         <div className="space-y-3">
-          <button 
+          <button
             onClick={() => handleQuickLogin('client@xhaba.com', 'client123')}
             disabled={loading}
             className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 text-sm"
@@ -149,7 +160,7 @@ function Login() {
             <span className="text-xs text-gray-400">client@xhaba.com</span>
           </button>
 
-          <button 
+          <button
             onClick={() => handleQuickLogin('artisan@xhaba.com', 'artisan123')}
             disabled={loading}
             className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 text-sm"
@@ -161,7 +172,7 @@ function Login() {
             <span className="text-xs text-gray-400">artisan@xhaba.com</span>
           </button>
 
-          <button 
+          <button
             onClick={() => handleQuickLogin('admin@xhaba.com', 'admin123')}
             disabled={loading}
             className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 text-sm"
@@ -176,8 +187,8 @@ function Login() {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           ¿No tienes cuenta?{' '}
-          <button 
-            onClick={() => navigate('/register')} 
+          <button
+            onClick={() => navigate('/register')}
             className="text-grana font-semibold hover:underline"
           >
             Regístrate
