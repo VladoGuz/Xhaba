@@ -375,6 +375,8 @@ function Catalog() {
                             {regionProducts.map((product) => {
                               // Determina si es una pieza única (stock: 1)
                               const isUnique = product.variants && product.variants.some(v => v.stock === 1);
+                              // Obtener la primera variante con stock disponible para el checkout
+                              const firstAvailableVariant = product.variants && product.variants.find(v => v.stock > 0);
                               return (
                                 <ProductCard 
                                   key={product.product_id || product.id}
@@ -385,6 +387,8 @@ function Catalog() {
                                   // Fallback de imagen primaria si no existe
                                   image={product.images && product.images[0] ? product.images[0] : 'valles1.jpg'}
                                   isUnique={isUnique}
+                                  variantId={firstAvailableVariant ? firstAvailableVariant.variant_id : null}
+                                  stock={firstAvailableVariant ? firstAvailableVariant.stock : 0}
                                 />
                               );
                             })}

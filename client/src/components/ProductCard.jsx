@@ -19,7 +19,7 @@ import { formatMXN } from '../utils/formatCurrency';
  * @param {string} image - Ruta o nombre del archivo de imagen.
  * @param {boolean} isUnique - Indicador lógico de existencia única (stock = 1).
  */
-function ProductCard({ id, title, price, artisan, image, isUnique }) {
+function ProductCard({ id, title, price, artisan, image, isUnique, variantId, stock }) {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ function ProductCard({ id, title, price, artisan, image, isUnique }) {
       navigate('/login');
       return;
     }
-    addToCart({ id, title, price, artisan, image, isUnique });
+    addToCart({ id: variantId || id, productId: id, title, price, artisan, image, isUnique, stock });
   };
 
   const handleBuyNow = () => {
@@ -39,7 +39,7 @@ function ProductCard({ id, title, price, artisan, image, isUnique }) {
       navigate('/login');
       return;
     }
-    addToCart({ id, title, price, artisan, image, isUnique });
+    addToCart({ id: variantId || id, productId: id, title, price, artisan, image, isUnique, stock });
     navigate('/cart');
   };
 

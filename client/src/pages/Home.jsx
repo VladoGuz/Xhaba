@@ -132,6 +132,7 @@ function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {products.slice(0, 6).map((product) => {
               const isUnique = product.variants && product.variants.some(v => v.stock === 1);
+              const firstAvailableVariant = product.variants && product.variants.find(v => v.stock > 0);
               return (
                 <ProductCard
                   key={product.product_id || product.id}
@@ -141,6 +142,8 @@ function Home() {
                   artisan={`${product.artisan_name} (${product.artisan_community})`}
                   image={product.images && product.images[0] ? product.images[0] : 'valles1.jpg'}
                   isUnique={isUnique}
+                  variantId={firstAvailableVariant ? firstAvailableVariant.variant_id : null}
+                  stock={firstAvailableVariant ? firstAvailableVariant.stock : 0}
                 />
               );
             })}
